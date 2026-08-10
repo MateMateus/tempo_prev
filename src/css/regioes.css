@@ -1,0 +1,114 @@
+/* Styles for SP Regiões Page */
+.regioes-container {
+    max-width: 1200px;
+    margin: 1.5rem auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.regioes-header {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem 2rem;
+    box-shadow: var(--shadow-card);
+}
+
+.regioes-title {
+    font-family: var(--font-heading);
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.regioes-subtitle {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+}
+
+.regioes-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.25rem;
+}
+
+.regiao-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1rem;
+    box-shadow: var(--shadow-card);
+    transition: transform var(--transition-fast), border-color var(--transition-fast);
+}
+
+.regiao-card:hover {
+    border-color: var(--accent-blue);
+    transform: translateY(-3px);
+}
+
+.regiao-card__top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.regiao-card__name {
+    font-family: var(--font-heading);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.regiao-card__state {
+    font-size: 0.775rem;
+    color: var(--text-muted);
+}
+
+.regiao-card__icon {
+    font-size: 2.2rem;
+}
+
+.regiao-card__bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.regiao-card__temp {
+    font-family: var(--font-heading);
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+.regiao-card__details {
+    font-size: 0.775rem;
+    color: var(--text-secondary);
+    text-align: right;
+}
+
+@media (max-width: 1024px) {
+    .regioes-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 580px) {
+    .regioes-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .regioes-header {
+        padding: 1.25rem;
+    }
+}
