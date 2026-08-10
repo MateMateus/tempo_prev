@@ -79,17 +79,17 @@ async function inicio(app, queryParams = {}) {
         return;
     }
 
-    const atual = climaData.current_weather;
+    const atual = climaData?.current_weather || { temperature: 20, windspeed: 10, weathercode: 0 };
     const infoWmo = traduzirClimaWmo(atual.weathercode);
     const tempAtual = Math.round(atual.temperature);
     const ventoSpeed = Math.round(atual.windspeed);
     
     // Pegar umidade atual do primeiro horário
-    const umidadeAtual = climaData.hourly.relative_humidity_2m[0] || 50;
+    const umidadeAtual = climaData?.hourly?.relative_humidity_2m?.[0] ?? 50;
 
     // Formatar horários de sol
-    const nascerSol = climaData.daily.sunrise[0] ? climaData.daily.sunrise[0].split("T")[1] : "06:00";
-    const porSol = climaData.daily.sunset[0] ? climaData.daily.sunset[0].split("T")[1] : "18:30";
+    const nascerSol = climaData?.daily?.sunrise?.[0] ? climaData.daily.sunrise[0].split("T")[1] : "06:00";
+    const porSol = climaData?.daily?.sunset?.[0] ? climaData.daily.sunset[0].split("T")[1] : "18:30";
 
     // -------------------------------------------------------------
     // RENDERIZAÇÃO DA INTERFACE (DESKTOP GRID + MOBILE MINIMALIST)
@@ -130,10 +130,10 @@ async function inicio(app, queryParams = {}) {
             <div class="mobile-hourly-section">
                 <h3>🕒 Previsão por Hora</h3>
                 <div class="hourly-carousel">
-                    ${climaData.hourly.time.slice(0, 12).map((timeStr, idx) => {
-                        const hora = timeStr.split("T")[1].substring(0, 5);
-                        const tHora = Math.round(climaData.hourly.temperature_2m[idx]);
-                        const codeHora = climaData.hourly.weather_code[idx];
+                    ${(climaData?.hourly?.time || []).slice(0, 12).map((timeStr, idx) => {
+                        const hora = timeStr ? timeStr.split("T")[1]?.substring(0, 5) || "00:00" : "00:00";
+                        const tHora = Math.round(climaData?.hourly?.temperature_2m?.[idx] ?? tempAtual);
+                        const codeHora = climaData?.hourly?.weather_code?.[idx] ?? 0;
                         const iconeHora = traduzirClimaWmo(codeHora).icone;
                         const isNow = idx === 0;
 
@@ -186,11 +186,11 @@ async function inicio(app, queryParams = {}) {
                     </div>
 
                     <!-- Cards dos Próximos Dias -->
-                    ${climaData.daily.time.slice(1, 6).map((dataStr, index) => {
+                    ${(climaData?.daily?.time || []).slice(1, 6).map((dataStr, index) => {
                         const idx = index + 1;
-                        const tMax = Math.round(climaData.daily.temperature_2m_max[idx]);
-                        const tMin = Math.round(climaData.daily.temperature_2m_min[idx]);
-                        const iconeDia = traduzirClimaWmo(climaData.daily.weather_code[idx]).icone;
+                        const tMax = Math.round(climaData?.daily?.temperature_2m_max?.[idx] ?? tempAtual);
+                        const tMin = Math.round(climaData?.daily?.temperature_2m_min?.[idx] ?? (tempAtual - 5));
+                        const iconeDia = traduzirClimaWmo(climaData?.daily?.weather_code?.[idx] ?? 0).icone;
 
                         return `
                             <div class="weekly-card">

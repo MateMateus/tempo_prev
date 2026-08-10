@@ -2,7 +2,7 @@ async function sobre(app) {
     app.innerHTML = `
         <div class="cep-container">
             <div class="cep-card">
-                <h1 class="cep-title">ℹ️ Sobre o `tempo_prev`</h1>
+                <h1 class="cep-title">ℹ️ Sobre o tempo_prev</h1>
                 <p class="cep-subtitle">Aplicação Web Single Page Application (SPA) para Previsão do Tempo e Monitoramento Climático do Brasil.</p>
                 
                 <div class="address-info-grid">

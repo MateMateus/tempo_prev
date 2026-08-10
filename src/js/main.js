@@ -54,8 +54,19 @@ async function render() {
         }
     });
 
-    // Render Page with container and parameters
-    await rotaAtual.pagina(app, queryParams);
+    try {
+        // Render Page with container and parameters
+        await rotaAtual.pagina(app, queryParams);
+    } catch (err) {
+        console.error('[RENDER ERROR]', err);
+        app.innerHTML = `
+            <div class="cep-container" style="text-align: center; padding: 3rem 1rem;">
+                <h2 style="color: var(--accent-blue);">Ocorreu um erro ao carregar esta página</h2>
+                <p style="color: var(--text-muted); margin-top: 0.5rem;">${err.message || 'Erro inesperado'}</p>
+                <a href="#inicio" class="cep-btn" style="display: inline-flex; margin-top: 1.5rem;">Recarregar Dashboard</a>
+            </div>
+        `;
+    }
 }
 
 // Global Event Listeners
