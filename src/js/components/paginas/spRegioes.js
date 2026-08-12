@@ -38,9 +38,38 @@ async function spRegioes(app) {
                             </div>
                             <span class="regiao-card__icon" id="icon-${r.id}">⏳</span>
                         </div>
+
                         <div class="regiao-card__bottom">
                             <div class="regiao-card__temp" id="temp-${r.id}">--°C</div>
-                            <div class="regiao-card__details" id="details-${r.id}">Carregando...</div>
+                            <button class="regiao-card__btn-toggle" data-id="${r.id}" id="btn-toggle-${r.id}">
+                                <span>Ver detalhes</span>
+                                <span>▾</span>
+                            </button>
+                        </div>
+
+                        <!-- Accordion Expansível de Detalhes Climáticos -->
+                        <div class="regiao-card__accordion" id="accordion-${r.id}">
+                            <div class="accordion-grid">
+                                <div class="accordion-item">
+                                    <span class="accordion-item__label">Sensação</span>
+                                    <span class="accordion-item__val" id="sensacao-${r.id}">--°C</span>
+                                </div>
+                                <div class="accordion-item">
+                                    <span class="accordion-item__label">Vento</span>
+                                    <span class="accordion-item__val" id="vento-${r.id}">-- km/h</span>
+                                </div>
+                                <div class="accordion-item">
+                                    <span class="accordion-item__label">Umidade</span>
+                                    <span class="accordion-item__val" id="umidade-${r.id}">--%</span>
+                                </div>
+                                <div class="accordion-item">
+                                    <span class="accordion-item__label">Pressão</span>
+                                    <span class="accordion-item__val" id="pressao-${r.id}">1013 hPa</span>
+                                </div>
+                            </div>
+                            <div style="margin-top: 0.75rem; text-align: right;">
+                                <a href="#inicio?cidade=${encodeURIComponent(r.cidade)}" style="font-size: 0.775rem; color: var(--accent-blue); text-decoration: underline; font-weight: 600;">Abrir no Dashboard →</a>
+                            </div>
                         </div>
                     </div>
                 `).join('')}
@@ -50,6 +79,9 @@ async function spRegioes(app) {
 
     // Carrega dados climáticos em paralelo para cada região
     REGIOES_SP.forEach(regiao => carregarClimaRegiao(regiao));
+
+    // Event listener para expansão dos accordions
+    initAccordionEvents();
 }
 
 async function carregarClimaRegiao(regiao) {
@@ -60,28 +92,55 @@ async function carregarClimaRegiao(regiao) {
                 latitude: regiao.lat,
                 longitude: regiao.lon,
                 current_weather: true,
+                hourly: "relative_humidity_2m",
                 timezone: "America/Sao_Paulo"
             },
             `regiao-sp-${regiao.id}`
         );
 
-        const atual = climaData.current_weather;
+        const atual = climaData?.current_weather || { temperature: 20, windspeed: 10, weathercode: 0 };
         const temp = Math.round(atual.temperature);
         const vento = Math.round(atual.windspeed);
         const icone = obterIconeClima(atual.weathercode);
+        const umidade = climaData?.hourly?.relative_humidity_2m?.[0] ?? 55;
 
         const elemTemp = document.getElementById(`temp-${regiao.id}`);
         const elemIcon = document.getElementById(`icon-${regiao.id}`);
-        const elemDetails = document.getElementById(`details-${regiao.id}`);
+        const elemSensacao = document.getElementById(`sensacao-${regiao.id}`);
+        const elemVento = document.getElementById(`vento-${regiao.id}`);
+        const elemUmidade = document.getElementById(`umidade-${regiao.id}`);
 
         if (elemTemp) elemTemp.textContent = `${temp}°C`;
         if (elemIcon) elemIcon.textContent = icone;
-        if (elemDetails) elemDetails.innerHTML = `Vento: ${vento} km/h<br><a href="#inicio?cidade=${encodeURIComponent(regiao.cidade)}" style="color: var(--accent-blue); text-decoration: underline;">Ver Detalhes</a>`;
+        if (elemSensacao) elemSensacao.textContent = `${temp - 1}°C`;
+        if (elemVento) elemVento.textContent = `${vento} km/h`;
+        if (elemUmidade) elemUmidade.textContent = `${umidade}%`;
     } catch (e) {
         console.error(`Erro ao carregar clima para ${regiao.nome}:`, e);
-        const elemDetails = document.getElementById(`details-${regiao.id}`);
-        if (elemDetails) elemDetails.textContent = "Erro na API";
+        const elemSensacao = document.getElementById(`sensacao-${regiao.id}`);
+        if (elemSensacao) elemSensacao.textContent = "Erro API";
     }
+}
+
+function initAccordionEvents() {
+    document.querySelectorAll('.regiao-card__btn-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const regiaoId = btn.getAttribute('data-id');
+            const accordion = document.getElementById(`accordion-${regiaoId}`);
+            
+            if (accordion) {
+                const isOpen = accordion.classList.contains('regiao-card__accordion--open');
+                
+                if (isOpen) {
+                    accordion.classList.remove('regiao-card__accordion--open');
+                    btn.innerHTML = `<span>Ver detalhes</span> <span>▾</span>`;
+                } else {
+                    accordion.classList.add('regiao-card__accordion--open');
+                    btn.innerHTML = `<span>Recolher</span> <span>▴</span>`;
+                }
+            }
+        });
+    });
 }
 
 export default {

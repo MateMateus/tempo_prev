@@ -45,7 +45,6 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    gap: 1rem;
     box-shadow: var(--shadow-card);
     transition: transform var(--transition-fast), border-color var(--transition-fast);
 }
@@ -81,20 +80,77 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
+    margin-top: 1rem;
 }
 
 .regiao-card__temp {
-    font-family: var(--font-heading);
-    font-size: 2rem;
-    font-weight: 800;
+    font-family: var(--font-number);
+    font-size: 2.2rem;
+    font-weight: 700;
     color: var(--text-primary);
     line-height: 1;
 }
 
-.regiao-card__details {
-    font-size: 0.775rem;
+.regiao-card__btn-toggle {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--accent-blue);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.35rem 0.6rem;
+    border-radius: var(--radius-sm);
+    background-color: var(--bg-card-hover);
+    border: 1px solid var(--border-color);
+    transition: var(--transition-fast);
+}
+
+.regiao-card__btn-toggle:hover {
+    border-color: var(--accent-blue);
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+/* Accordion Smooth Expansion */
+.regiao-card__accordion {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1), padding 0.35s ease, margin 0.35s ease;
+    border-top: 0px solid transparent;
+    margin-top: 0;
+    padding-top: 0;
+    font-size: 0.825rem;
     color: var(--text-secondary);
-    text-align: right;
+}
+
+.regiao-card__accordion--open {
+    max-height: 220px;
+    border-top: 1px solid var(--border-color);
+    margin-top: 0.85rem;
+    padding-top: 0.85rem;
+}
+
+.accordion-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.65rem;
+}
+
+.accordion-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.accordion-item__label {
+    font-size: 0.725rem;
+    color: var(--text-muted);
+}
+
+.accordion-item__val {
+    font-family: var(--font-number);
+    font-weight: 600;
+    color: var(--text-primary);
 }
 
 @media (max-width: 1024px) {
