@@ -1,0 +1,45 @@
+{
+  "versao_spec": "5.0",
+  "projeto": "tempo_prev",
+  "objetivo": "Ajuste fino no carrossel semanal, higienização dos rótulos do mapa Leaflet (remoção de caracteres CJK/asiáticos), implementação funcional das camadas térmicas e de chuva, correção do contraste no botão de CEP, substituição de dados técnicos (lat/long) por métricas úteis e inclusão do mini-mapa demarcatório no CEP.",
+  "especificacoes_tecnicas": {
+    "carrossel_semanal": {
+      "disposicao_cards": "Alinhamento horizontal rígido lado a lado (`display: flex; flex-direction: row; gap: 8px;`)",
+      "disposicao_interna": "Elementos internos empilhados verticalmente (`flex-direction: column; align-items: center; justify-content: space-between;`)",
+      "comportamento_hover": "No estado focado (`:hover` ou focado via JS), ampliar a tipografia do Dia da Semana e da Temperatura, reduzindo o espaçamento interno (`gap: 4px`) para reaproxime-los do ícone vetorial central"
+    },
+    "mapa_global_leaflet": {
+      "tileset_idioma_bugfix": {
+        "problema": "Presença de rótulos em ideogramas asiáticos e caracteres árabes no tileset atual",
+        "solucao": "Substituir a URL do `L.tileLayer` por uma base limpa em alfabeto latino sem rótulos CJK (ex: `https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png` ou CartoDB Dark Matter No Labels com camada de rótulos em Português/Inglês)"
+      },
+      "camada_termica_foguinho": {
+        "status": "Inoperante / Apenas visual",
+        "solucao": "Implementar a alternância real da camada no Leaflet utilizando TileLayers climáticos abertos de temperatura (ex: OpenWeatherMap Temperature Layer `https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=...` ou camada gradiente via Open-Meteo/Canvas)"
+      },
+      "camada_precipitacao_novo_botao": {
+        "novo_recurso": "Adicionar um segundo botão de controle ao lado do botão térmico (ícone de nuvem/gota de chuva)",
+        "comportamento": "Alternar a exibição da camada de radar de precipitação/chuva em tempo real sobre o mapa global"
+      }
+    },
+    "pagina_busca_cep": {
+      "bugfix_contraste_botao": {
+        "elemento": "Botão `.btn-busca-cep`",
+        "problema": "Texto branco sobre fundo branco (invisível em Dark Mode)",
+        "solucao": "Ajustar CSS (`cep.css`) definindo cor de fundo com alto contraste (ex: fundo `#FFFFFF` com texto `#121316` no Dark Mode ou fundo accent contrastante) e `:hover` legível"
+      },
+      "refatoracao_metricas": {
+        "remocao": "Remover os campos de Latitude e Longitude do card de resultado",
+        "inclusao": "Exibir dados meteorológicos relevantes ao usuário: Sensação Térmica (°C), Umidade Relativa (%), Velocidade do Vento (km/h) e Descrição da Condição Climática"
+      },
+      "mini_mapa_bairro": {
+        "novo_componente": "Inserir container `<div id='cep-map'></div>` no rodapé do card de resultado",
+        "integração": "Inicializar mapa Leaflet centralizado exatamente nas coordenadas da rua/bairro obtidas pela geocodificação do ViaCEP, com marcador customizado (pin) demarcando o local exato"
+      }
+    }
+  },
+  "workflow_git": {
+    "branch_desenvolvimento": "feature/fix-cep-map-and-weekly-cards",
+    "commits_semanticos": true
+  }
+}

@@ -10,7 +10,7 @@
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
-    min-width: 0; /* Prevents flex/grid children overflow */
+    min-width: 0;
 }
 
 .dashboard-right {
@@ -47,41 +47,57 @@
     border-bottom-color: var(--text-primary);
 }
 
-/* Weekly 7-Day Forecast Grid */
+/* Weekly 7-Day Forecast Grid (Strict Flex Row Layout) */
 .forecast-weekly-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 0.75rem;
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
     width: 100%;
 }
 
 .weekly-card {
+    flex: 1;
     background-color: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
-    padding: 8px 12px;
+    padding: 10px 8px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
-    gap: 0.4rem;
+    gap: 6px;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     min-width: 0;
     overflow: hidden;
 }
 
+/* Hover & Active State Zoom & Typography Scaling */
 .weekly-card:hover, .weekly-card--active {
     border-color: var(--text-primary);
     background-color: var(--bg-card-hover);
-    transform: translateY(-2px);
+    transform: translateY(-3px);
+    gap: 4px;
+}
+
+.weekly-card:hover .weekly-card__day,
+.weekly-card--active .weekly-card__day {
+    font-size: 0.925rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.weekly-card:hover .weekly-card__temp,
+.weekly-card--active .weekly-card__temp {
+    font-size: 1.65rem;
+    font-weight: 700;
 }
 
 .weekly-card--hero {
+    flex: 2.2;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), var(--bg-card));
     border-color: var(--text-primary);
     box-shadow: var(--shadow-glow);
-    grid-column: span 2;
     text-align: left;
     align-items: flex-start;
     padding: 1.25rem;
@@ -97,11 +113,12 @@
     font-weight: 600;
     color: var(--text-secondary);
     white-space: nowrap;
+    transition: font-size 0.2s ease, font-weight 0.2s ease;
 }
 
 .weekly-card__icon {
     font-size: 1.6rem;
-    margin: 0.15rem 0;
+    margin: 0.1rem 0;
     display: flex;
     align-items: center;
 }
@@ -111,6 +128,7 @@
     font-size: 1.5rem;
     font-weight: 600;
     color: var(--text-primary);
+    transition: font-size 0.2s ease, font-weight 0.2s ease;
 }
 
 /* Hero Temp & Icon Layout */
@@ -308,7 +326,7 @@
 .city-item__right {
     display: flex;
     align-items: center;
-    gap: 0.4rem; /* Spacing reduced between name and icon */
+    gap: 0.4rem;
 }
 
 .city-item__icon {
@@ -325,7 +343,7 @@
     line-height: 1;
 }
 
-/* Map Section (Clean Header Direct Above Map Div) */
+/* Map Section */
 .map-section {
     display: flex;
     flex-direction: column;
@@ -350,7 +368,7 @@
 
 #mapa-brasil-leaf {
     width: 100%;
-    height: 420px; /* Spec: minimum 420px height */
+    height: 420px;
     border-radius: var(--radius-md);
     overflow: hidden;
     border: 1px solid var(--border-color);
@@ -400,8 +418,8 @@
     border-color: var(--text-primary) !important;
 }
 
-/* Circular Thermal Layer Button (Next to Zoom Controls) */
-.map-btn-thermal-circular {
+/* Circular Control Bar Buttons (Thermal + Rain Radar) */
+.map-btn-control-circular {
     width: 36px;
     height: 36px;
     border-radius: 50%;
@@ -416,8 +434,8 @@
     transition: var(--transition-fast);
 }
 
-.map-btn-thermal-circular:hover,
-.map-btn-thermal-circular--active {
+.map-btn-control-circular:hover,
+.map-btn-control-circular--active {
     background-color: var(--text-primary);
     color: var(--bg-main);
     border-color: var(--text-primary);
@@ -445,7 +463,7 @@
     display: none;
 }
 
-/* BREAKPOINT 1024PX (Spec v4.0 Requirement) */
+/* BREAKPOINT 1024PX */
 @media (max-width: 1024px) {
     .dashboard-grid {
         grid-template-columns: 1fr;
@@ -453,14 +471,17 @@
     }
 
     .forecast-weekly-grid {
-        grid-template-columns: repeat(4, 1fr);
+        flex-wrap: wrap;
+    }
+
+    .weekly-card {
+        flex: 1 1 calc(25% - 8px);
     }
 
     .weekly-card--hero {
-        grid-column: span 4;
+        flex: 1 1 100%;
     }
 
-    /* Weather Icon MUST be positioned BELOW numeric temperature */
     .hero-card__temp-row {
         flex-direction: column;
         align-items: flex-start;
@@ -472,7 +493,6 @@
         margin-top: 0.25rem;
     }
 
-    /* Stack 6 metrics in individual vertical lines */
     .hero-card__metrics-2col {
         grid-template-columns: 1fr;
         gap: 0.5rem;
