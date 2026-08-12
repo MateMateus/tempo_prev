@@ -35,7 +35,9 @@ function obterDiaSemana(dataIso, indice) {
 let mapInstance = null;
 let tileLayerInstance = null;
 let heatmapLayerInstance = null;
+let rainLayerInstance = null;
 let isHeatmapActive = false;
+let isRainActive = false;
 
 async function inicio(app, queryParams = {}) {
     let cidadeNome = queryParams.cidade || "São Paulo, Brasil";
@@ -92,17 +94,12 @@ async function inicio(app, queryParams = {}) {
 
     const horarioAtualStr = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-    // Cálculo exato de probabilidade de chuva por ciclo de 24h em intervalos de 4 horas [00:00, 04:00, 08:00, 12:00, 16:00, 20:00]
     const indices24h = [0, 4, 8, 12, 16, 20];
     const horarRotulos = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'];
     const dadosChuvaDinamicos = indices24h.map((idxVal, i) => {
         const pct = climaData?.hourly?.precipitation_probability?.[idxVal] ?? Math.floor(Math.random() * 40);
         return { hora: horarRotulos[i], pct };
     });
-
-    // -------------------------------------------------------------
-    // RENDERIZAÇÃO DA INTERFACE
-    // -------------------------------------------------------------
 
     app.innerHTML = `
         <!-- 1. VISUAL MOBILE MINIMALISTA -->
@@ -174,7 +171,7 @@ async function inicio(app, queryParams = {}) {
                     ${renderForecastGrid(0, climaData, cidadeNome, horarioAtualStr)}
                 </div>
 
-                <!-- Seção do Mapa Global Leaflet (Sem wrapper div card desnecessário) -->
+                <!-- Seção do Mapa Global Leaflet -->
                 <div class="map-section">
                     <div class="map-section__header">
                         <h3 class="map-section__title">${SVG_ICONS.map} Condições do Tempo Globais</h3>
@@ -186,7 +183,7 @@ async function inicio(app, queryParams = {}) {
 
             <!-- Coluna Direita (Painel Lateral) -->
             <div class="dashboard-right">
-                <!-- Painel de Chance de Chuva Dinâmico (Ciclo de 24h) -->
+                <!-- Painel de Chance de Chuva Dinâmico -->
                 <div class="panel-rain">
                     <div class="panel-rain__title">
                         <span>Chance de Chuva</span>
@@ -205,7 +202,7 @@ async function inicio(app, queryParams = {}) {
                     </div>
                 </div>
 
-                <!-- Painel de Principais Capitais (Sem prefixo BR) -->
+                <!-- Painel de Principais Capitais -->
                 <div class="panel-cities">
                     <div class="panel-cities__header">
                         <h3>Principais Capitais</h3>
@@ -361,17 +358,17 @@ function initGridHoverEvents(climaData, cidadeNome, horarioAtualStr) {
     bindHoverListeners();
 }
 
-// Inicialização do Mapa Leaflet com Bounding Box & noWrap Fix
+// Inicialização do Mapa Leaflet sem Rótulos CJK e com Camadas Térmica & Chuva
 function initGlobalVectorMap() {
     const mapContainer = document.getElementById("mapa-brasil-leaf");
     if (!mapContainer || typeof L === "undefined") return;
 
+    // Destruição defensiva de instâncias prévias (Evita "Map container is already initialized")
     if (mapInstance) {
         mapInstance.remove();
         mapInstance = null;
     }
 
-    // Bounding Box travada contra panning infinito (Spec v4.0 Requirement)
     const bounds = [[-85, -180], [85, 180]];
 
     mapInstance = L.map("mapa-brasil-leaf", {
@@ -387,13 +384,13 @@ function initGlobalVectorMap() {
         zoomControl: true
     });
 
-    // Reposiciona o controle de zoom para o canto superior direito (topright)
     mapInstance.zoomControl.setPosition('topright');
 
+    // Tileset higienizado em Alfabeto Latino Sem Rótulos CJK (CartoDB Voyager / Dark Matter No Labels)
     const getTileUrl = (theme) => {
         return theme === 'light'
-            ? 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
-            : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+            ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png'
+            : 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}/{y}{r}.png';
     };
 
     const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
@@ -418,12 +415,15 @@ function initGlobalVectorMap() {
         }
     });
 
-    // Injeta Botão Circular de Camada Térmica junto aos Controles de Zoom (topright)
+    // Injeta dois botões circulares no controle do Leaflet (topright):
+    // 1. Botão de Camada Térmica (Foguinho)
+    // 2. Botão de Radar de Precipitação (Nuvem de Chuva)
     const zoomContainer = mapInstance.zoomControl.getContainer();
     if (zoomContainer) {
+        // 1. Botão Térmico
         const thermalBtn = document.createElement('button');
-        thermalBtn.className = 'map-btn-thermal-circular';
-        thermalBtn.title = 'Alternar Camada Térmica';
+        thermalBtn.className = 'map-btn-control-circular';
+        thermalBtn.title = 'Alternar Camada Térmica de Temperatura';
         thermalBtn.innerHTML = SVG_ICONS.flame;
 
         thermalBtn.addEventListener('click', (e) => {
@@ -431,7 +431,7 @@ function initGlobalVectorMap() {
             isHeatmapActive = !isHeatmapActive;
 
             if (isHeatmapActive) {
-                thermalBtn.classList.add('map-btn-thermal-circular--active');
+                thermalBtn.classList.add('map-btn-control-circular--active');
                 heatmapLayerInstance = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     opacity: 0.4,
                     maxZoom: 8,
@@ -439,7 +439,7 @@ function initGlobalVectorMap() {
                     bounds: bounds
                 }).addTo(mapInstance);
             } else {
-                thermalBtn.classList.remove('map-btn-thermal-circular--active');
+                thermalBtn.classList.remove('map-btn-control-circular--active');
                 if (heatmapLayerInstance) {
                     mapInstance.removeLayer(heatmapLayerInstance);
                     heatmapLayerInstance = null;
@@ -447,10 +447,39 @@ function initGlobalVectorMap() {
             }
         });
 
+        // 2. Botão de Chuva / Precipitação
+        const rainBtn = document.createElement('button');
+        rainBtn.className = 'map-btn-control-circular';
+        rainBtn.title = 'Alternar Radar de Chuva / Precipitação';
+        rainBtn.innerHTML = SVG_ICONS.rain;
+
+        rainBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            isRainActive = !isRainActive;
+
+            if (isRainActive) {
+                rainBtn.classList.add('map-btn-control-circular--active');
+                // Overlay de radar de precipitação
+                rainLayerInstance = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', {
+                    opacity: 0.55,
+                    maxZoom: 8,
+                    noWrap: true,
+                    bounds: bounds
+                }).addTo(mapInstance);
+            } else {
+                rainBtn.classList.remove('map-btn-control-circular--active');
+                if (rainLayerInstance) {
+                    mapInstance.removeLayer(rainLayerInstance);
+                    rainLayerInstance = null;
+                }
+            }
+        });
+
         zoomContainer.appendChild(thermalBtn);
+        zoomContainer.appendChild(rainBtn);
     }
 
-    // 6 Capitais Globais com Badges SVG
+    // 6 Capitais Globais
     CAPITAIS_GLOBAIS.forEach(m => {
         const customIcon = L.divIcon({
             className: 'leaflet-map-badge',
