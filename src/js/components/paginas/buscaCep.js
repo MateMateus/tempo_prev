@@ -1,6 +1,15 @@
 import buscarServicos from "../services/apiCache.js";
 import { SVG_ICONS } from "../icons.js";
 
+let cepMapInstance = null;
+
+function traduzirClimaWmo(codigo) {
+    if (codigo === 0) return { texto: "Ensolarado e Limpo", iconeSvg: SVG_ICONS.weatherSun };
+    if ([1, 2, 3].includes(codigo)) return { texto: "Parcialmente Nublado", iconeSvg: SVG_ICONS.weatherCloudSun };
+    if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(codigo)) return { texto: "Chuva Moderada", iconeSvg: SVG_ICONS.weatherRain };
+    return { texto: "Nublado", iconeSvg: SVG_ICONS.weatherCloudSun };
+}
+
 async function buscaCep(app) {
     app.innerHTML = `
         <div class="cep-container">
@@ -87,11 +96,13 @@ async function processarBuscaCep(cepLimpo) {
             return;
         }
 
-        const termoBusca = `${dadosEndereco.localidade}, ${dadosEndereco.uf}, Brasil`;
+        const bairroLogradouro = dadosEndereco.logradouro || dadosEndereco.bairro || dadosEndereco.localidade;
+        const termoBusca = `${bairroLogradouro}, ${dadosEndereco.localidade}, ${dadosEndereco.uf}, Brasil`;
+
         const geoData = await buscarServicos(
             "https://geocoding-api.open-meteo.com/v1/search",
             { name: termoBusca, count: 1, language: "pt", format: "json" },
-            `geo-${dadosEndereco.localidade}`
+            `geo-${dadosEndereco.localidade}-${cepLimpo}`
         );
 
         let lat = -23.5505;
@@ -107,16 +118,20 @@ async function processarBuscaCep(cepLimpo) {
                 latitude: lat,
                 longitude: lon,
                 current_weather: true,
-                daily: "temperature_2m_max,temperature_2m_min,weather_code",
+                hourly: "relative_humidity_2m",
                 timezone: "America/Sao_Paulo"
             },
             `clima-cep-${cepLimpo}`
         );
 
-        const atual = climaData?.current_weather || { temperature: 20, windspeed: 10 };
+        const atual = climaData?.current_weather || { temperature: 20, windspeed: 10, weathercode: 0 };
         const tempAtual = Math.round(atual.temperature);
         const vento = Math.round(atual.windspeed);
+        const sensacao = tempAtual - 1;
+        const umidade = climaData?.hourly?.relative_humidity_2m?.[0] ?? 60;
+        const infoWmo = traduzirClimaWmo(atual.weathercode);
 
+        // Substituição de Lat/Long por Sensação, Umidade, Vento e Condição Climática (Spec v5.0)
         containerResultado.innerHTML = `
             <div style="border-top: 1px solid var(--border-color); padding-top: 1.5rem; margin-top: 1rem;">
                 <h3 style="font-family: var(--font-heading); margin-bottom: 1rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
@@ -143,7 +158,7 @@ async function processarBuscaCep(cepLimpo) {
                 </div>
 
                 <h3 style="font-family: var(--font-heading); margin-bottom: 1rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
-                    ${SVG_ICONS.weatherCloudSun} Clima Atual no CEP
+                    ${SVG_ICONS.weatherCloudSun} Clima Atual no Bairro
                 </h3>
 
                 <div class="weekly-card weekly-card--hero" style="width: 100%; border-radius: var(--radius-lg);">
@@ -152,18 +167,31 @@ async function processarBuscaCep(cepLimpo) {
                             <div class="weekly-card__day">${dadosEndereco.localidade}, ${dadosEndereco.uf}</div>
                             <div style="font-size: 0.85rem; color: var(--text-secondary);">${dadosEndereco.bairro || 'Região central'}</div>
                         </div>
-                        <div style="font-size: 2rem;">${SVG_ICONS.weatherCloudSun}</div>
+                        <div style="font-size: 2rem;">${infoWmo.iconeSvg}</div>
                     </div>
                     <div class="hero-card__temp-big" style="font-family: var(--font-number); font-size: 4.2rem;">${tempAtual}°C</div>
                     
-                    <div class="hero-card__details-grid" style="grid-template-columns: repeat(3, 1fr);">
-                        <div>Vento: ${vento} km/h</div>
-                        <div>Latitude: ${lat.toFixed(2)}</div>
-                        <div>Longitude: ${lon.toFixed(2)}</div>
+                    <div class="hero-card__details-grid" style="grid-template-columns: repeat(4, 1fr);">
+                        <div>Sensação: <strong>${sensacao}°C</strong></div>
+                        <div>Umidade: <strong>${umidade}%</strong></div>
+                        <div>Vento: <strong>${vento} km/h</strong></div>
+                        <div>Condição: <strong>${infoWmo.texto}</strong></div>
                     </div>
+                </div>
+
+                <!-- Mini-Mapa do Bairro (Spec v5.0) -->
+                <div style="margin-top: 1.5rem;">
+                    <h3 style="font-family: var(--font-heading); margin-bottom: 0.75rem; font-size: 1.05rem; display: flex; align-items: center; gap: 0.5rem;">
+                        ${SVG_ICONS.map} Localização no Mapa
+                    </h3>
+                    <div id="cep-map"></div>
                 </div>
             </div>
         `;
+
+        // Renderiza o mini-mapa Leaflet centralizado no bairro com destruição defensiva previa
+        initCepMiniMap(lat, lon, `${dadosEndereco.bairro || dadosEndereco.localidade}`);
+
     } catch (err) {
         console.error("Erro na busca por CEP:", err);
         containerResultado.innerHTML = `
@@ -172,6 +200,46 @@ async function processarBuscaCep(cepLimpo) {
             </div>
         `;
     }
+}
+
+// Inicializa o Mini-Mapa Leaflet do Bairro
+function initCepMiniMap(lat, lon, bairroNome) {
+    const mapContainer = document.getElementById("cep-map");
+    if (!mapContainer || typeof L === "undefined") return;
+
+    // Destruição defensiva da instância anterior (Evita "Map container is already initialized")
+    if (cepMapInstance) {
+        cepMapInstance.remove();
+        cepMapInstance = null;
+    }
+
+    cepMapInstance = L.map("cep-map", {
+        center: [lat, lon],
+        zoom: 14,
+        dragging: true,
+        scrollWheelZoom: false,
+        zoomControl: true
+    });
+
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+    const tileUrl = currentTheme === 'light'
+        ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png'
+        : 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}/{y}{r}.png';
+
+    L.tileLayer(tileUrl, {
+        attribution: '&copy; CartoDB & OpenStreetMap',
+        maxZoom: 18
+    }).addTo(cepMapInstance);
+
+    // Marcador customizado no bairro do CEP
+    const customIcon = L.divIcon({
+        className: 'leaflet-map-badge',
+        html: `<span>📍 ${bairroNome}</span>`,
+        iconSize: [120, 26],
+        iconAnchor: [60, 13]
+    });
+
+    L.marker([lat, lon], { icon: customIcon }).addTo(cepMapInstance);
 }
 
 export default {
