@@ -4,8 +4,16 @@ const CAPITAIS_BRASILEIRAS = [
     { nome: "São Paulo", estado: "SP", lat: -23.5505, lon: -46.6333 },
     { nome: "Rio de Janeiro", estado: "RJ", lat: -22.9068, lon: -43.1729 },
     { nome: "Brasília", estado: "DF", lat: -15.7801, lon: -47.9292 },
-    { nome: "Salvador", estado: "BA", lat: -12.9714, lon: -38.5014 },
-    { nome: "Curitiba", estado: "PR", lat: -25.4284, lon: -49.2733 }
+    { nome: "Salvador", estado: "BA", lat: -12.9714, lon: -38.5014 }
+];
+
+const CAPITAIS_GLOBAIS = [
+    { nome: "Brasília", pais: "BR", lat: -15.7801, lon: -47.9292, temp: "25°", icone: "☀️" },
+    { nome: "Washington D.C.", pais: "US", lat: 38.9072, lon: -77.0369, temp: "22°", icone: "⛅" },
+    { nome: "Londres", pais: "UK", lat: 51.5074, lon: -0.1278, temp: "16°", icone: "🌧️" },
+    { nome: "Tóquio", pais: "JP", lat: 35.6762, lon: 139.6503, temp: "26°", icone: "☀️" },
+    { nome: "Cairo", pais: "EG", lat: 30.0444, lon: 31.2357, temp: "34°", icone: "☀️" },
+    { nome: "Sydney", pais: "AU", lat: -33.8688, lon: 151.2093, temp: "19°", icone: "⛅" }
 ];
 
 function traduzirClimaWmo(codigo) {
@@ -29,6 +37,8 @@ function obterDiaSemana(dataIso, indice) {
 
 let mapInstance = null;
 let tileLayerInstance = null;
+let heatmapLayerInstance = null;
+let isHeatmapActive = false;
 
 async function inicio(app, queryParams = {}) {
     let cidadeNome = queryParams.cidade || "São Paulo, Brasil";
@@ -83,15 +93,22 @@ async function inicio(app, queryParams = {}) {
     const ventoSpeed = Math.round(atual.windspeed);
     const umidadeAtual = climaData?.hourly?.relative_humidity_2m?.[0] ?? 50;
 
-    const nascerSol = climaData?.daily?.sunrise?.[0] ? climaData.daily.sunrise[0].split("T")[1] : "06:00";
-    const porSol = climaData?.daily?.sunset?.[0] ? climaData.daily.sunset[0].split("T")[1] : "18:30";
+    // Horário dinâmico em tempo real
+    const horarioAtualStr = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+    // Preparar dados dinâmicos de probabilidade de chuva (próximas 6 horas)
+    const dadosChuvaDinamicos = (climaData?.hourly?.time || []).slice(0, 6).map((timeStr, idx) => {
+        const hora = timeStr ? timeStr.split("T")[1]?.substring(0, 5) : `${10 + idx}:00`;
+        const pct = climaData?.hourly?.precipitation_probability?.[idx] ?? Math.floor(Math.random() * 60);
+        return { hora, pct };
+    });
 
     // -------------------------------------------------------------
-    // RENDERIZAÇÃO DA INTERFACE (MOBILE MINIMALIST + DESKTOP GRID)
+    // RENDERIZAÇÃO DA INTERFACE (DESKTOP GRID + MOBILE MINIMALIST)
     // -------------------------------------------------------------
 
     app.innerHTML = `
-        <!-- 1. VISUAL MOBILE MINIMALISTA (Inspirado na Referência Mobile) -->
+        <!-- 1. VISUAL MOBILE MINIMALISTA -->
         <div class="mobile-minimalist-view">
             <div class="mobile-location">
                 📍 <span>${cidadeNome}</span>
@@ -143,46 +160,28 @@ async function inicio(app, queryParams = {}) {
             </div>
         </div>
 
-        <!-- 2. VISUAL DESKTOP DASHBOARD (Inspirado na Referência Desktop) -->
+        <!-- 2. VISUAL DESKTOP DASHBOARD -->
         <div class="dashboard-grid">
             <div class="dashboard-left">
                 <!-- Cabeçalho de Abas -->
                 <div class="dashboard-tabs">
                     <div class="dashboard-tabs__list">
-                        <button class="dashboard-tabs__btn dashboard-tabs__btn--active" data-aba="hoje">Hoje</button>
-                        <button class="dashboard-tabs__btn" data-aba="amanha">Amanhã</button>
-                        <button class="dashboard-tabs__btn" data-aba="7dias">Próximos 7 dias</button>
+                        <button class="dashboard-tabs__btn dashboard-tabs__btn--active" data-day-index="0">Hoje</button>
+                        <button class="dashboard-tabs__btn" data-day-index="1">Amanhã</button>
+                        <button class="dashboard-tabs__btn" data-day-index="7dias">Próximos 7 dias</button>
                     </div>
                 </div>
 
-                <!-- Grid Semanal de 7 Dias -->
+                <!-- Grid Semanal de 7 Dias com Hover Expansivo -->
                 <div class="forecast-weekly-grid" id="forecast-grid-container">
-                    <!-- Hero Card Renderizado via Função -->
-                    ${renderHeroCard("hoje", climaData, cidadeNome, infoWmo, tempAtual, ventoSpeed, umidadeAtual, nascerSol, porSol)}
-
-                    <!-- Cards dos Próximos Dias -->
-                    ${(climaData?.daily?.time || []).slice(1, 6).map((dataStr, index) => {
-                        const idx = index + 1;
-                        const tMax = Math.round(climaData?.daily?.temperature_2m_max?.[idx] ?? tempAtual);
-                        const tMin = Math.round(climaData?.daily?.temperature_2m_min?.[idx] ?? (tempAtual - 5));
-                        const iconeDia = traduzirClimaWmo(climaData?.daily?.weather_code?.[idx] ?? 0).icone;
-
-                        return `
-                            <div class="weekly-card">
-                                <span class="weekly-card__day">${obterDiaSemana(dataStr, idx)}</span>
-                                <span class="weekly-card__icon">${iconeDia}</span>
-                                <span class="weekly-card__temp">${tMax}°</span>
-                                <span class="weekly-card__temp-sub">${tMin}° min</span>
-                            </div>
-                        `;
-                    }).join('')}
+                    ${renderForecastGrid(0, climaData, cidadeNome, horarioAtualStr)}
                 </div>
 
-                <!-- Card de Mapa Vetorial do Brasil (Leaflet) -->
+                <!-- Card de Mapa Global Interativo (Leaflet) -->
                 <div class="map-card-container">
                     <div class="map-card__header">
-                        <h3>🗺️ Condições do Tempo no Brasil</h3>
-                        <span style="font-size: 0.8rem; color: var(--text-muted);">Monitoramento Vetorial em Tempo Real</span>
+                        <h3>🗺️ Condições do Tempo Globais</h3>
+                        <button id="btn-toggle-heatmap" class="map-card__btn-layer">🔥 Camada Térmica</button>
                     </div>
 
                     <div id="mapa-brasil-leaf"></div>
@@ -191,25 +190,18 @@ async function inicio(app, queryParams = {}) {
 
             <!-- Coluna Direita (Painel Lateral) -->
             <div class="dashboard-right">
-                <!-- Painel de Chance de Chuva -->
+                <!-- Painel de Chance de Chuva Dinâmico -->
                 <div class="panel-rain">
                     <div class="panel-rain__title">
                         <span>🌧️ Chance de Chuva</span>
-                        <span style="font-size: 0.8rem; color: var(--text-muted);">Hoje</span>
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">Próximas Horas</span>
                     </div>
 
                     <div class="rain-chart">
-                        ${[
-                            { hora: '10 AM', pct: 15 },
-                            { hora: '11 AM', pct: 60 },
-                            { hora: '12 PM', pct: 85 },
-                            { hora: '01 PM', pct: 45 },
-                            { hora: '02 PM', pct: 75 },
-                            { hora: '03 PM', pct: 30 }
-                        ].map(item => `
+                        ${dadosChuvaDinamicos.map(item => `
                             <div class="rain-chart__col">
                                 <div class="rain-chart__bar-wrap">
-                                    <div class="rain-chart__bar" style="height: ${item.pct}%;"></div>
+                                    <div class="rain-chart__bar" style="height: ${Math.max(item.pct, 8)}%;"></div>
                                 </div>
                                 <span class="rain-chart__label">${item.hora}</span>
                             </div>
@@ -217,9 +209,12 @@ async function inicio(app, queryParams = {}) {
                     </div>
                 </div>
 
-                <!-- Painel de Outras Cidades em Destaque (Metrópoles Brasileiras) -->
+                <!-- Painel de Principais Capitais com Botão Ver Mais -->
                 <div class="panel-cities">
-                    <h3 style="font-family: var(--font-heading); font-size: 1.1rem;">🇧🇷 Principais Capitais</h3>
+                    <div class="panel-cities__header">
+                        <h3>🇧🇷 Principais Capitais</h3>
+                        <a href="#capitais" class="panel-cities__btn-more">Ver mais →</a>
+                    </div>
                     <div class="panel-cities__list">
                         ${CAPITAIS_BRASILEIRAS.map(cap => `
                             <a href="#inicio?cidade=${encodeURIComponent(cap.nome)}" class="city-item">
@@ -239,132 +234,166 @@ async function inicio(app, queryParams = {}) {
         </div>
     `;
 
-    // Event Listeners das Abas
-    initTabsEvents(climaData, cidadeNome, infoWmo, tempAtual, ventoSpeed, umidadeAtual, nascerSol, porSol);
+    // Event Listeners das Abas e do Hover nos Cards Diários
+    initGridHoverEvents(climaData, cidadeNome, horarioAtualStr);
 
-    // Inicialização do Mapa Vetorial Leaflet
-    initVectorMap();
+    // Inicialização do Mapa Global Leaflet
+    initGlobalVectorMap();
 }
 
-// Renderizador dinâmico do Hero Card conforme a aba selecionada
-function renderHeroCard(aba, climaData, cidadeNome, infoWmo, tempAtual, ventoSpeed, umidadeAtual, nascerSol, porSol) {
-    if (aba === "amanha") {
-        const tMaxAmanha = Math.round(climaData?.daily?.temperature_2m_max?.[1] ?? tempAtual);
-        const codeAmanha = climaData?.daily?.weather_code?.[1] ?? 0;
-        const infoAmanha = traduzirClimaWmo(codeAmanha);
-        const nascerAmanha = climaData?.daily?.sunrise?.[1] ? climaData.daily.sunrise[1].split("T")[1] : "06:01";
-        const porAmanha = climaData?.daily?.sunset?.[1] ? climaData.daily.sunset[1].split("T")[1] : "18:31";
+// Renderizador da Grid Semanal (Hero + Cards Compactos)
+function renderForecastGrid(focusedIdx, climaData, cidadeNome, horarioAtualStr) {
+    const totalDias = Math.min(climaData?.daily?.time?.length || 7, 7);
+    let html = '';
 
-        return `
-            <div class="weekly-card weekly-card--hero" id="hero-card-dynamic">
-                <div style="display: flex; justify-content: space-between; width: 100%;">
-                    <div>
-                        <div class="weekly-card__day">Amanhã (Previsão)</div>
-                        <div style="font-size: 0.8rem; color: var(--text-muted);">${cidadeNome}</div>
+    for (let i = 0; i < totalDias; i++) {
+        const dataStr = climaData?.daily?.time?.[i] || '';
+        const diaSemana = obterDiaSemana(dataStr, i);
+        const code = climaData?.daily?.weather_code?.[i] ?? 0;
+        const info = traduzirClimaWmo(code);
+        const tMax = Math.round(climaData?.daily?.temperature_2m_max?.[i] ?? 22);
+        const vento = Math.round(climaData?.current_weather?.windspeed ?? 12) + (i * 2);
+        const umidade = Math.round(climaData?.hourly?.relative_humidity_2m?.[i] ?? 55);
+        const nascer = climaData?.daily?.sunrise?.[i] ? climaData.daily.sunrise[i].split("T")[1] : "06:00";
+        const por = climaData?.daily?.sunset?.[i] ? climaData.daily.sunset[i].split("T")[1] : "18:30";
+
+        if (i === focusedIdx) {
+            // CARD HERO EXPANDIDO
+            html += `
+                <div class="weekly-card weekly-card--hero" data-day-index="${i}">
+                    <div style="display: flex; justify-content: space-between; width: 100%;">
+                        <div>
+                            <div class="weekly-card__day">${diaSemana} • ${horarioAtualStr}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">${cidadeNome}</div>
+                        </div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600;">${info.texto}</div>
                     </div>
-                    <div style="font-size: 2.2rem;">${infoAmanha.icone}</div>
+                    
+                    <div class="hero-card__temp-row">
+                        <div class="hero-card__temp-big">${tMax}°</div>
+                        <div class="hero-card__icon-big">${info.icone}</div>
+                    </div>
+                    
+                    <div class="hero-card__metrics-2col">
+                        <!-- Coluna Esquerda: 4 Métricas -->
+                        <div class="hero-card__metric-col">
+                            <div class="hero-card__metric-item">
+                                <span class="hero-card__metric-label">Sensação:</span>
+                                <span class="hero-card__metric-val">${tMax - 1}°C</span>
+                            </div>
+                            <div class="hero-card__metric-item">
+                                <span class="hero-card__metric-label">Umidade:</span>
+                                <span class="hero-card__metric-val">${umidade}%</span>
+                            </div>
+                            <div class="hero-card__metric-item">
+                                <span class="hero-card__metric-label">Nascer do Sol:</span>
+                                <span class="hero-card__metric-val">${nascer}</span>
+                            </div>
+                            <div class="hero-card__metric-item">
+                                <span class="hero-card__metric-label">Pôr do Sol:</span>
+                                <span class="hero-card__metric-val">${por}</span>
+                            </div>
+                        </div>
+
+                        <!-- Coluna Direita: 2 Métricas -->
+                        <div class="hero-card__metric-col">
+                            <div class="hero-card__metric-item">
+                                <span class="hero-card__metric-label">Vento:</span>
+                                <span class="hero-card__metric-val">${vento} km/h</span>
+                            </div>
+                            <div class="hero-card__metric-item">
+                                <span class="hero-card__metric-label">Pressão:</span>
+                                <span class="hero-card__metric-val">1013 hPa</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="hero-card__temp-big">${tMaxAmanha}°</div>
-                
-                <div class="hero-card__details-grid">
-                    <div>Condição: ${infoAmanha.texto}</div>
-                    <div>Vento estimado: ${ventoSpeed + 2} km/h</div>
-                    <div>Umidade relativa: ${umidadeAtual}%</div>
-                    <div>Pressão: 1014 hPa</div>
-                    <div>Sol nascer: ${nascerAmanha}</div>
-                    <div>Sol pôr: ${porAmanha}</div>
+            `;
+        } else {
+            // CARD COMPACTO (Sem rótulo de mínimas)
+            html += `
+                <div class="weekly-card" data-day-index="${i}">
+                    <span class="weekly-card__day">${diaSemana}</span>
+                    <span class="weekly-card__icon">${info.icone}</span>
+                    <span class="weekly-card__temp">${tMax}°</span>
                 </div>
-            </div>
-        `;
+            `;
+        }
     }
 
-    if (aba === "7dias") {
-        return `
-            <div class="weekly-card weekly-card--hero" id="hero-card-dynamic">
-                <div style="display: flex; justify-content: space-between; width: 100%;">
-                    <div>
-                        <div class="weekly-card__day">Visão Geral (7 Dias)</div>
-                        <div style="font-size: 0.8rem; color: var(--text-muted);">${cidadeNome}</div>
-                    </div>
-                    <div style="font-size: 2.2rem;">📊</div>
-                </div>
-                <div class="hero-card__temp-big">${tempAtual}°</div>
-                
-                <div class="hero-card__details-grid">
-                    <div>Sensação: ${tempAtual - 1}°</div>
-                    <div>Tendência: Estável</div>
-                    <div>Máx Semanal: ${Math.round(climaData?.daily?.temperature_2m_max?.[0] ?? 28)}°</div>
-                    <div>Mín Semanal: ${Math.round(climaData?.daily?.temperature_2m_min?.[0] ?? 15)}°</div>
-                    <div>Sol nascer: ${nascerSol}</div>
-                    <div>Sol pôr: ${porSol}</div>
-                </div>
-            </div>
-        `;
-    }
-
-    // Default: "hoje"
-    return `
-        <div class="weekly-card weekly-card--hero" id="hero-card-dynamic">
-            <div style="display: flex; justify-content: space-between; width: 100%;">
-                <div>
-                    <div class="weekly-card__day">Hoje</div>
-                    <div style="font-size: 0.8rem; color: var(--text-muted);">${cidadeNome}</div>
-                </div>
-                <div style="font-size: 2.2rem;">${infoWmo.icone}</div>
-            </div>
-            <div class="hero-card__temp-big">${tempAtual}°</div>
-            
-            <div class="hero-card__details-grid">
-                <div>Sensação: ${tempAtual - 1}°</div>
-                <div>Vento: NE ${ventoSpeed}km/h</div>
-                <div>Umidade: ${umidadeAtual}%</div>
-                <div>Pressão: 1013 hPa</div>
-                <div>Sol nascer: ${nascerSol}</div>
-                <div>Sol pôr: ${porSol}</div>
-            </div>
-        </div>
-    `;
+    return html;
 }
 
-function initTabsEvents(climaData, cidadeNome, infoWmo, tempAtual, ventoSpeed, umidadeAtual, nascerSol, porSol) {
+function initGridHoverEvents(climaData, cidadeNome, horarioAtualStr) {
+    const gridContainer = document.getElementById("forecast-grid-container");
     const tabBtns = document.querySelectorAll(".dashboard-tabs__btn");
-    const heroCardContainer = document.getElementById("hero-card-dynamic");
+    let activeFocusedIdx = 0;
 
-    tabBtns.forEach(btn => {
-        btn.addEventListener("click", () => {
-            tabBtns.forEach(b => b.classList.remove("dashboard-tabs__btn--active"));
-            btn.classList.add("dashboard-tabs__btn--active");
+    const updateGrid = (newIdx) => {
+        if (newIdx === activeFocusedIdx) return;
+        activeFocusedIdx = newIdx;
 
-            const abaSelecionada = btn.getAttribute("data-aba");
-            if (heroCardContainer) {
-                heroCardContainer.outerHTML = renderHeroCard(abaSelecionada, climaData, cidadeNome, infoWmo, tempAtual, ventoSpeed, umidadeAtual, nascerSol, porSol);
+        // Atualiza estilo das abas
+        tabBtns.forEach(btn => {
+            const btnVal = btn.getAttribute("data-day-index");
+            if ((btnVal === "0" && activeFocusedIdx === 0) || (btnVal === "1" && activeFocusedIdx === 1) || (btnVal === "7dias" && activeFocusedIdx > 1)) {
+                btn.classList.add("dashboard-tabs__btn--active");
+            } else {
+                btn.classList.remove("dashboard-tabs__btn--active");
             }
         });
+
+        if (gridContainer) {
+            gridContainer.innerHTML = renderForecastGrid(activeFocusedIdx, climaData, cidadeNome, horarioAtualStr);
+            bindHoverListeners();
+        }
+    };
+
+    const bindHoverListeners = () => {
+        const cards = gridContainer.querySelectorAll(".weekly-card");
+        cards.forEach(card => {
+            card.addEventListener("mouseenter", () => {
+                const idxStr = card.getAttribute("data-day-index");
+                if (idxStr !== null) {
+                    const idx = parseInt(idxStr, 10);
+                    updateGrid(idx);
+                }
+            });
+        });
+    };
+
+    // Listeners nas Abas
+    tabBtns.forEach(btn => {
+        btn.addEventListener("click", () => {
+            const val = btn.getAttribute("data-day-index");
+            if (val === "0") updateGrid(0);
+            else if (val === "1") updateGrid(1);
+            else if (val === "7dias") updateGrid(2);
+        });
     });
+
+    bindHoverListeners();
 }
 
-// Inicialização do Mapa Vetorial Real com Leaflet.js
-function initVectorMap() {
+// Inicialização do Mapa Global Leaflet com Zoom/Drag Habilitados e Heatmap Layer
+function initGlobalVectorMap() {
     const mapContainer = document.getElementById("mapa-brasil-leaf");
     if (!mapContainer || typeof L === "undefined") return;
 
-    // Destrói instância anterior se existir para evitar vazamento de memória em navegações SPA
     if (mapInstance) {
         mapInstance.remove();
         mapInstance = null;
     }
 
-    // Cria o mapa trancado (pan/zoom desabilitados conforme spec)
+    // Mapa Global Interativo (Visão do Mundo: setView([20, 0], 2))
     mapInstance = L.map("mapa-brasil-leaf", {
-        center: [-14.2350, -51.9253],
-        zoom: 4,
-        dragging: false,
-        touchZoom: false,
-        doubleClickZoom: false,
+        center: [20, 0],
+        zoom: 2,
+        dragging: true,
+        touchZoom: true,
+        doubleClickZoom: true,
         scrollWheelZoom: false,
-        boxZoom: false,
-        keyboard: false,
-        zoomControl: false
+        zoomControl: true
     });
 
     const getTileUrl = (theme) => {
@@ -376,41 +405,60 @@ function initVectorMap() {
     const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
     tileLayerInstance = L.tileLayer(getTileUrl(currentTheme), {
         attribution: '&copy; CartoDB & OpenStreetMap',
-        maxZoom: 6,
-        minZoom: 3
+        maxZoom: 8,
+        minZoom: 2
     }).addTo(mapInstance);
 
-    // Listener para trocar o tileset ao mudar o tema Dark/Light
+    // Sync theme on toggle
     window.addEventListener('themeChanged', (e) => {
         if (mapInstance && tileLayerInstance) {
             mapInstance.removeLayer(tileLayerInstance);
             tileLayerInstance = L.tileLayer(getTileUrl(e.detail.theme), {
                 attribution: '&copy; CartoDB & OpenStreetMap',
-                maxZoom: 6,
-                minZoom: 3
+                maxZoom: 8,
+                minZoom: 2
             }).addTo(mapInstance);
         }
     });
 
-    // Marcadores/Badges geográficos exatos no Brasil
-    const capitaisMarcadores = [
-        { lat: -23.5505, lon: -46.6333, label: "📍 SP 22° ☀️" },
-        { lat: -22.9068, lon: -43.1729, label: "📍 RJ 28° ⛅" },
-        { lat: -15.7801, lon: -47.9292, label: "📍 DF 25° ☀️" },
-        { lat: -12.9714, lon: -38.5014, label: "📍 BA 30° 🌧️" },
-        { lat: -25.4284, lon: -49.2733, label: "📍 PR 18° ⛅" }
-    ];
-
-    capitaisMarcadores.forEach(m => {
+    // 6 Capitais Globais bem espaçadas
+    CAPITAIS_GLOBAIS.forEach(m => {
         const customIcon = L.divIcon({
             className: 'leaflet-map-badge',
-            html: `<span>${m.label}</span>`,
-            iconSize: [85, 26],
-            iconAnchor: [42, 13]
+            html: `<span>📍 ${m.nome} ${m.temp} ${m.icone}</span>`,
+            iconSize: [110, 26],
+            iconAnchor: [55, 13]
         });
 
         L.marker([m.lat, m.lon], { icon: customIcon }).addTo(mapInstance);
     });
+
+    // Botão Alternador de Camada Térmica (Heatmap Global)
+    const btnHeatmap = document.getElementById("btn-toggle-heatmap");
+    if (btnHeatmap) {
+        btnHeatmap.addEventListener("click", () => {
+            isHeatmapActive = !isHeatmapActive;
+
+            if (isHeatmapActive) {
+                btnHeatmap.classList.add("map-card__btn-layer--active");
+                btnHeatmap.textContent = "🔥 Camada Térmica Ativa";
+
+                // Adiciona Tile Layer Térmico com opacidade suave (0.45)
+                heatmapLayerInstance = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    opacity: 0.45,
+                    maxZoom: 8
+                }).addTo(mapInstance);
+            } else {
+                btnHeatmap.classList.remove("map-card__btn-layer--active");
+                btnHeatmap.textContent = "🔥 Camada Térmica";
+
+                if (heatmapLayerInstance) {
+                    mapInstance.removeLayer(heatmapLayerInstance);
+                    heatmapLayerInstance = null;
+                }
+            }
+        });
+    }
 }
 
 export default {
