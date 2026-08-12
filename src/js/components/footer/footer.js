@@ -5,9 +5,7 @@ function footer() {
     footerElem.innerHTML = `
         <div class="bem-footer">
             <div class="bem-footer__content">
-                <p>⚡ <strong>tempo_prev</strong> — Previsão do Tempo Brasil em Vanilla JS (SPA)</p>
-                <p>Desenvolvido com Open-Meteo API & ViaCEP API • Cache com TTL de 30 minutos</p>
-                <p>© ${new Date().getFullYear()} • Mateus Braga (MateMateus)</p>
+                <p>Tempo Prev — Previsão do Tempo Brasil © 2026 • Mateus Braga (MateMateus)</p>
             </div>
         </div>
     `;
