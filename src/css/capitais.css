@@ -1,0 +1,147 @@
+/* Styles for Capitais do Brasil Page */
+.capitais-container {
+    max-width: 1200px;
+    margin: 1.5rem auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.capitais-header {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem 2rem;
+    box-shadow: var(--shadow-card);
+}
+
+.capitais-title {
+    font-family: var(--font-heading);
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.capitais-subtitle {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+}
+
+.capitais-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.25rem;
+}
+
+.capital-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: var(--shadow-card);
+    transition: transform var(--transition-fast), border-color var(--transition-fast);
+}
+
+.capital-card:hover {
+    border-color: var(--text-primary);
+    transform: translateY(-3px);
+}
+
+.capital-card__top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.capital-card__name {
+    font-family: var(--font-heading);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.capital-card__state {
+    font-size: 0.775rem;
+    color: var(--text-muted);
+}
+
+.capital-card__icon {
+    font-size: 2.2rem;
+}
+
+.capital-card__bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-top: 1rem;
+}
+
+.capital-card__temp {
+    font-family: var(--font-number);
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+.capital-card__btn-toggle {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.35rem 0.6rem;
+    border-radius: var(--radius-sm);
+    background-color: var(--bg-card-hover);
+    border: 1px solid var(--border-color);
+    transition: var(--transition-fast);
+}
+
+.capital-card__btn-toggle:hover {
+    border-color: var(--text-primary);
+    background-color: var(--border-highlight);
+}
+
+/* Accordion Smooth Expansion */
+.capital-card__accordion {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1), padding 0.35s ease, margin 0.35s ease;
+    border-top: 0px solid transparent;
+    margin-top: 0;
+    padding-top: 0;
+    font-size: 0.825rem;
+    color: var(--text-secondary);
+}
+
+.capital-card__accordion--open {
+    max-height: 220px;
+    border-top: 1px solid var(--border-color);
+    margin-top: 0.85rem;
+    padding-top: 0.85rem;
+}
+
+@media (max-width: 1024px) {
+    .capitais-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 580px) {
+    .capitais-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .capitais-header {
+        padding: 1.25rem;
+    }
+}
