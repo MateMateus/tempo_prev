@@ -227,7 +227,7 @@ async function inicio(app, queryParams = {}) {
         </div>
     `;
 
-    initGridHoverEvents(climaData, cidadeNome, horarioAtualStr);
+    initGridEvents(climaData, cidadeNome, horarioAtualStr);
     initGlobalVectorMap();
 }
 
@@ -247,7 +247,6 @@ function renderForecastGrid(focusedIdx, climaData, cidadeNome, horarioAtualStr) 
         const por = climaData?.daily?.sunset?.[i] ? climaData.daily.sunset[i].split("T")[1] : "18:30";
 
         if (i === focusedIdx) {
-            // CARD HERO: 6 métricas em lista vertical única (Spec v6.0 Requirement)
             html += `
                 <div class="weekly-card weekly-card--hero" data-day-index="${i}">
                     <div style="display: flex; justify-content: space-between; width: 100%;">
@@ -305,7 +304,8 @@ function renderForecastGrid(focusedIdx, climaData, cidadeNome, horarioAtualStr) 
     return html;
 }
 
-function initGridHoverEvents(climaData, cidadeNome, horarioAtualStr) {
+// Gerenciador de Eventos do Grid (Troca por CLIQUE obrigatória no Tablet/Mobile, Hover opcional apenas em Desktop 1025px+)
+function initGridEvents(climaData, cidadeNome, horarioAtualStr) {
     const gridContainer = document.getElementById("forecast-grid-container");
     const tabBtns = document.querySelectorAll(".dashboard-tabs__btn");
     let activeFocusedIdx = 0;
@@ -325,20 +325,28 @@ function initGridHoverEvents(climaData, cidadeNome, horarioAtualStr) {
 
         if (gridContainer) {
             gridContainer.innerHTML = renderForecastGrid(activeFocusedIdx, climaData, cidadeNome, horarioAtualStr);
-            bindHoverListeners();
+            bindCardListeners();
         }
     };
 
-    const bindHoverListeners = () => {
+    const bindCardListeners = () => {
         const cards = gridContainer.querySelectorAll(".weekly-card");
         cards.forEach(card => {
-            card.addEventListener("mouseenter", () => {
-                const idxStr = card.getAttribute("data-day-index");
-                if (idxStr !== null) {
-                    const idx = parseInt(idxStr, 10);
-                    updateGrid(idx);
-                }
+            const idxStr = card.getAttribute("data-day-index");
+            if (idxStr === null) return;
+            const idx = parseInt(idxStr, 10);
+
+            // Clique é SEMPRE ativado em qualquer resolução (Spec v7.0 Requirement)
+            card.addEventListener("click", () => {
+                updateGrid(idx);
             });
+
+            // Hover ativado EXCLUSIVAMENTE em telas desktop grandes (> 1024px) (Spec v7.0: Eliminar hover no tablet)
+            if (window.innerWidth > 1024) {
+                card.addEventListener("mouseenter", () => {
+                    updateGrid(idx);
+                });
+            }
         });
     };
 
@@ -351,7 +359,7 @@ function initGridHoverEvents(climaData, cidadeNome, horarioAtualStr) {
         });
     });
 
-    bindHoverListeners();
+    bindCardListeners();
 }
 
 // Inicialização do Mapa Leaflet sem Rótulos CJK e com Camadas Reais (Térmica + Chuva)
@@ -381,7 +389,6 @@ function initGlobalVectorMap() {
 
     mapInstance.zoomControl.setPosition('topright');
 
-    // Base tileset em Alfabeto Latino sem ideogramas asiáticos/CJK (Spec v6.0 Requirement)
     const getTileUrl = (theme) => {
         return theme === 'light'
             ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png'
@@ -412,7 +419,7 @@ function initGlobalVectorMap() {
 
     const zoomContainer = mapInstance.zoomControl.getContainer();
     if (zoomContainer) {
-        // 1. Botão Térmico Real (Foguinho)
+        // 1. Botão Térmico Real (Foguinho) - Instanciação Ativa (Spec v7.0 Requirement)
         const thermalBtn = document.createElement('button');
         thermalBtn.className = 'map-btn-control-circular';
         thermalBtn.title = 'Alternar Gradiente Térmico de Temperatura';
@@ -424,9 +431,8 @@ function initGlobalVectorMap() {
 
             if (isHeatmapActive) {
                 thermalBtn.classList.add('map-btn-control-circular--active');
-                // OpenWeatherMap Temperature Layer / Temperature Gradient Overlay
                 heatmapLayerInstance = L.tileLayer('https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=93e786b1c31317540274e76a6669fb7a', {
-                    opacity: 0.5,
+                    opacity: 0.55,
                     maxZoom: 8,
                     noWrap: true,
                     bounds: bounds
@@ -440,7 +446,7 @@ function initGlobalVectorMap() {
             }
         });
 
-        // 2. Botão de Radar de Precipitação Real (Chuva)
+        // 2. Botão de Radar de Precipitação Real (Chuva) - Instanciação Ativa (Spec v7.0 Requirement)
         const rainBtn = document.createElement('button');
         rainBtn.className = 'map-btn-control-circular';
         rainBtn.title = 'Alternar Radar de Precipitação de Chuva';
@@ -452,9 +458,8 @@ function initGlobalVectorMap() {
 
             if (isRainActive) {
                 rainBtn.classList.add('map-btn-control-circular--active');
-                // OpenWeatherMap Precipitation Radar Overlay
                 rainLayerInstance = L.tileLayer('https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=93e786b1c31317540274e76a6669fb7a', {
-                    opacity: 0.6,
+                    opacity: 0.65,
                     maxZoom: 8,
                     noWrap: true,
                     bounds: bounds
