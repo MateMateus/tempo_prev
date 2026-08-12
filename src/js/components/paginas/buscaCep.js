@@ -135,8 +135,9 @@ async function processarBuscaCep(cepLimpo) {
 
         containerResultado.innerHTML = `
             <div style="border-top: 1px solid var(--border-color); padding-top: 1.5rem; margin-top: 1rem;">
-                <h3 style="font-family: var(--font-heading); margin-bottom: 1rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
-                    ${SVG_ICONS.location} Endereço Localizado
+                <h3 class="heading-with-icon" style="font-family: var(--font-heading); margin-bottom: 1rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.6rem; font-size: 1.3rem;">
+                    <span class="heading-icon-svg">${SVG_ICONS.location}</span>
+                    <span>Endereço Localizado</span>
                 </h3>
 
                 <div class="address-info-grid">
@@ -158,8 +159,9 @@ async function processarBuscaCep(cepLimpo) {
                     </div>
                 </div>
 
-                <h3 style="font-family: var(--font-heading); margin-bottom: 1rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
-                    ${SVG_ICONS.weatherCloudSun} Clima Atual no Bairro
+                <h3 class="heading-with-icon" style="font-family: var(--font-heading); margin-bottom: 1rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.6rem; font-size: 1.3rem;">
+                    <span class="heading-icon-svg">${SVG_ICONS.weatherCloudSun}</span>
+                    <span>Clima Atual no Bairro</span>
                 </h3>
 
                 <div class="weekly-card weekly-card--hero" style="width: 100%; border-radius: var(--radius-lg);">
@@ -180,10 +182,11 @@ async function processarBuscaCep(cepLimpo) {
                     </div>
                 </div>
 
-                <!-- Mini-Mapa do Bairro com Delimitação de Polígono -->
+                <!-- Mini-Mapa do Bairro com Polígono Tracejado (dashArray: '6, 6') -->
                 <div style="margin-top: 1.5rem;">
-                    <h3 style="font-family: var(--font-heading); margin-bottom: 0.75rem; font-size: 1.05rem; display: flex; align-items: center; gap: 0.5rem;">
-                        ${SVG_ICONS.map} Área Geográfica do Bairro
+                    <h3 class="heading-with-icon" style="font-family: var(--font-heading); margin-bottom: 0.75rem; font-size: 1.2rem; display: flex; align-items: center; gap: 0.6rem;">
+                        <span class="heading-icon-svg">${SVG_ICONS.map}</span>
+                        <span>Área Geográfica do Bairro</span>
                     </h3>
                     <div id="cep-map"></div>
                 </div>
@@ -202,20 +205,23 @@ async function processarBuscaCep(cepLimpo) {
     }
 }
 
-// Inicializa o Mini-Mapa Leaflet do Bairro com Polígono e Sincronização de Tema (Spec v6.0 Requirement)
+// Inicializa o Mini-Mapa Leaflet do Bairro com Polígono Tracejado (dashArray: '6, 6') e Zoom Adaptativo Mobile (Spec v7.0)
 function initCepMiniMap(lat, lon, bairroNome) {
     const mapContainer = document.getElementById("cep-map");
     if (!mapContainer || typeof L === "undefined") return;
 
-    // Destruição defensiva de instâncias prévias
     if (cepMapInstance) {
         cepMapInstance.remove();
         cepMapInstance = null;
     }
 
+    // Zoom adaptativo para resoluções mobile 320px-425px (Spec v7.0 Requirement: Zoom 13/14)
+    const isMobileScreen = window.innerWidth <= 425;
+    const initialZoom = isMobileScreen ? 13 : 14;
+
     cepMapInstance = L.map("cep-map", {
         center: [lat, lon],
-        zoom: 14,
+        zoom: initialZoom,
         dragging: true,
         scrollWheelZoom: false,
         zoomControl: true
@@ -234,7 +240,7 @@ function initCepMiniMap(lat, lon, bairroNome) {
         maxZoom: 18
     }).addTo(cepMapInstance);
 
-    // Polígono / Bounding Box Vetorial demarcando o perímetro do bairro (Spec v6.0 Requirement)
+    // Polígono Vetorial Tracejado (dashArray: '6, 6') (Spec v7.0 Requirement)
     const boundsRectangle = [
         [lat - 0.008, lon - 0.012],
         [lat + 0.008, lon + 0.012]
@@ -243,14 +249,13 @@ function initCepMiniMap(lat, lon, bairroNome) {
     const getPolygonStyle = (theme) => ({
         color: theme === 'light' ? '#121316' : '#FFFFFF',
         weight: 2,
+        dashArray: '6, 6', // Contorno tracejado 6,6
         fillColor: theme === 'light' ? '#121316' : '#FFFFFF',
-        fillOpacity: 0.12,
-        dashArray: '4, 4'
+        fillOpacity: 0.1
     });
 
     cepPolygonInstance = L.rectangle(boundsRectangle, getPolygonStyle(currentTheme)).addTo(cepMapInstance);
 
-    // Marcador customizado com Badge
     const customIcon = L.divIcon({
         className: 'leaflet-map-badge',
         html: `<span>📍 Bairro: ${bairroNome}</span>`,
@@ -260,7 +265,6 @@ function initCepMiniMap(lat, lon, bairroNome) {
 
     L.marker([lat, lon], { icon: customIcon }).addTo(cepMapInstance);
 
-    // Sincronização de Tema no Mini-Mapa de CEP (Spec v6.0 Requirement)
     window.addEventListener('themeChanged', (e) => {
         if (cepMapInstance && cepTileLayerInstance) {
             const newTheme = e.detail.theme;
