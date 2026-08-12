@@ -54,9 +54,9 @@ input, select, textarea {
 }
 
 .bem-navbar__container {
-    max-width: 1400px;
+    max-width: 1440px;
     margin: 0 auto;
-    padding: 0.85rem 1.5rem;
+    padding: 0.85rem 1.25rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -85,8 +85,8 @@ input, select, textarea {
 }
 
 .bem-navbar__toggle:hover {
-    border-color: var(--accent-blue);
-    color: var(--accent-blue);
+    border-color: var(--text-primary);
+    color: var(--text-primary);
 }
 
 .bem-navbar__brand {
@@ -102,6 +102,8 @@ input, select, textarea {
 
 .bem-navbar__brand-icon {
     font-size: 1.5rem;
+    display: flex;
+    align-items: center;
 }
 
 .bem-navbar__center {
@@ -129,8 +131,8 @@ input, select, textarea {
 }
 
 .bem-navbar__search-input:focus {
-    border-color: var(--accent-blue);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    border-color: var(--text-primary);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.12);
 }
 
 .bem-navbar__search-icon {
@@ -139,8 +141,54 @@ input, select, textarea {
     top: 50%;
     transform: translateY(-50%);
     color: var(--text-muted);
-    font-size: 0.95rem;
     pointer-events: none;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+}
+
+.bem-navbar__right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* Dedicated Mobile Search Button */
+.bem-navbar__search-mobile-btn {
+    display: none;
+}
+
+.bem-navbar__theme-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-full);
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-size: 1.15rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.bem-navbar__theme-btn:hover {
+    background-color: var(--bg-card-hover);
+    border-color: var(--text-primary);
+}
+
+.bem-navbar__location-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.825rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    padding: 0.4rem 0.85rem;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-full);
 }
 
 /* Autocomplete Dropdown */
@@ -153,25 +201,24 @@ input, select, textarea {
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-card);
-    z-index: 1100;
-    overflow: hidden;
     display: none;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 1050;
 }
 
 .bem-navbar__autocomplete--active {
-    display: block;
+    display: flex;
 }
 
 .bem-navbar__autocomplete-item {
+    padding: 0.75rem 1rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.7rem 1rem;
-    font-size: 0.875rem;
-    color: var(--text-primary);
     cursor: pointer;
-    transition: background-color var(--transition-fast);
     border-bottom: 1px solid var(--border-color);
+    transition: var(--transition-fast);
 }
 
 .bem-navbar__autocomplete-item:last-child {
@@ -180,7 +227,6 @@ input, select, textarea {
 
 .bem-navbar__autocomplete-item:hover {
     background-color: var(--bg-card-hover);
-    color: var(--accent-blue);
 }
 
 .bem-navbar__autocomplete-sub {
@@ -188,77 +234,30 @@ input, select, textarea {
     color: var(--text-muted);
 }
 
-.bem-navbar__right {
-    display: flex;
-    align-items: center;
-    gap: 0.85rem;
-}
-
-.bem-navbar__theme-btn {
-    display: flex;
+/* Page Section Heading Icon Scaling (Spec v7.0 Requirement) */
+.heading-icon-svg {
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: var(--radius-full);
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
     color: var(--text-primary);
-    font-size: 1.1rem;
-    transition: var(--transition-fast);
 }
 
-.bem-navbar__theme-btn:hover {
-    border-color: var(--accent-amber);
-    color: var(--accent-amber);
+.heading-icon-svg svg {
+    width: 26px;
+    height: 26px;
+    stroke-width: 2.2;
 }
 
-.bem-navbar__location-badge {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-    padding: 0.4rem 0.85rem;
-    border-radius: var(--radius-full);
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    font-size: 0.825rem;
-    font-weight: 500;
-    color: var(--text-secondary);
-}
-
-/* Off-canvas Drawer / Collapsible Menu */
-.bem-drawer {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 280px;
-    height: 100vh;
-    background-color: var(--bg-navbar);
-    border-right: 1px solid var(--border-color);
-    z-index: 1050;
-    transform: translateX(-100%);
-    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    padding: 1.5rem;
-    display: flex;
-    flex-direction: column;
-}
-
-.bem-drawer--open {
-    transform: translateX(0);
-}
-
+/* Off-canvas Drawer */
 .bem-drawer__overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-color: rgba(0, 0, 0, 0.5);
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(4px);
-    z-index: 1040;
+    z-index: 1100;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.3s ease;
+    transition: opacity var(--transition-normal);
 }
 
 .bem-drawer__overlay--active {
@@ -266,17 +265,43 @@ input, select, textarea {
     pointer-events: auto;
 }
 
+.bem-drawer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    background-color: var(--bg-card);
+    border-right: 1px solid var(--border-color);
+    z-index: 1200;
+    transform: translateX(-100%);
+    transition: transform var(--transition-normal);
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem;
+}
+
+.bem-drawer--open {
+    transform: translateX(0);
+}
+
 .bem-drawer__header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 2rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 1.5rem;
 }
 
 .bem-drawer__close {
     font-size: 1.5rem;
     color: var(--text-muted);
-    padding: 0.25rem;
+    transition: var(--transition-fast);
+}
+
+.bem-drawer__close:hover {
+    color: var(--text-primary);
 }
 
 .bem-drawer__menu {
@@ -289,74 +314,59 @@ input, select, textarea {
 .bem-drawer__link {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 1rem;
-    border-radius: var(--radius-sm);
+    gap: 0.85rem;
+    padding: 0.85rem 1rem;
+    border-radius: var(--radius-md);
     color: var(--text-secondary);
-    font-weight: 500;
+    font-weight: 600;
+    font-size: 1rem;
     transition: var(--transition-fast);
 }
 
-.bem-drawer__link:hover, .bem-drawer__link--active {
+.bem-drawer__link:hover {
     background-color: var(--bg-card-hover);
-    color: var(--accent-blue);
+    color: var(--text-primary);
 }
 
-/* Footer Component */
+.bem-drawer__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Footer BEM */
 .bem-footer {
-    background-color: var(--bg-navbar);
     border-top: 1px solid var(--border-color);
+    background-color: var(--bg-navbar);
     padding: 1.5rem;
     text-align: center;
-    font-size: 0.85rem;
     color: var(--text-muted);
-    margin-top: auto;
+    font-size: 0.875rem;
 }
 
-.bem-footer__content {
-    max-width: 1400px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-/* Card Microframework */
-.bem-card {
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    padding: 1.25rem;
-    box-shadow: var(--shadow-card);
-    transition: transform var(--transition-fast), border-color var(--transition-fast);
-}
-
-.bem-card:hover {
-    border-color: var(--border-highlight);
-}
-
-/* Responsiveness Media Queries */
-@media (max-width: 768px) {
-    .app-container {
-        padding: 1rem;
-    }
-
+@media (max-width: 640px) {
     .bem-navbar__center {
         display: none;
     }
 
-    .bem-navbar__location-badge span {
-        display: none;
+    .bem-navbar__center--mobile-active {
+        display: flex;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        max-width: 100%;
+        margin: 0;
+        padding: 0.5rem 1rem;
+        background-color: var(--bg-navbar);
+        border-bottom: 1px solid var(--border-color);
     }
-}
 
-@media (max-width: 480px) {
-    .bem-navbar__brand span {
-        font-size: 1.1rem;
+    .bem-navbar__search-mobile-btn {
+        display: flex;
     }
-    
-    .bem-navbar__container {
-        padding: 0.75rem 1rem;
+
+    .bem-navbar__location-badge {
+        display: none;
     }
 }

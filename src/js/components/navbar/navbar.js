@@ -25,7 +25,7 @@ function navbar(rotas) {
                     </a>
                 </div>
 
-                <div class="bem-navbar__center">
+                <div class="bem-navbar__center" id="navbar-search-center">
                     <form id="form-busca-rapida" class="bem-navbar__search" autocomplete="off">
                         <span class="bem-navbar__search-icon">${SVG_ICONS.search}</span>
                         <input type="text" id="input-busca-rapida" class="bem-navbar__search-input" placeholder="Pesquisar cidade brasileira (ex: São Paulo, Rio, Salvador)..." />
@@ -34,6 +34,11 @@ function navbar(rotas) {
                 </div>
 
                 <div class="bem-navbar__right">
+                    <!-- Botão de Busca Dedicado no Mobile (Spec v7.0 Requirement) -->
+                    <button id="btn-search-mobile" class="bem-navbar__theme-btn bem-navbar__search-mobile-btn" title="Pesquisar Cidade">
+                        ${SVG_ICONS.search}
+                    </button>
+
                     <button id="btn-toggle-theme" class="bem-navbar__theme-btn" title="Alternar Tema">
                         ${savedTheme === 'dark' ? SVG_ICONS.sun : SVG_ICONS.moon}
                     </button>
@@ -78,6 +83,7 @@ function initNavbarEvents() {
     const drawer = document.getElementById('drawer-menu');
     const overlay = document.getElementById('drawer-overlay');
     const themeBtn = document.getElementById('btn-toggle-theme');
+    const searchMobileBtn = document.getElementById('btn-search-mobile');
     const searchForm = document.getElementById('form-busca-rapida');
     const searchInput = document.getElementById('input-busca-rapida');
     const autocompleteDropdown = document.getElementById('autocomplete-dropdown');
@@ -99,6 +105,17 @@ function initNavbarEvents() {
     document.querySelectorAll('.bem-drawer__link').forEach(link => {
         link.addEventListener('click', closeDrawer);
     });
+
+    // Botão de Busca Dedicado no Mobile: Foca e exibe campo de busca
+    if (searchMobileBtn && searchInput) {
+        searchMobileBtn.addEventListener('click', () => {
+            const centerNav = document.getElementById('navbar-search-center');
+            if (centerNav) {
+                centerNav.classList.toggle('bem-navbar__center--mobile-active');
+            }
+            searchInput.focus();
+        });
+    }
 
     if (themeBtn) {
         themeBtn.addEventListener('click', () => {
