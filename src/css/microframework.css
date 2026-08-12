@@ -36,10 +36,10 @@ input, select, textarea {
 /* App Container */
 .app-container {
     flex: 1;
-    max-width: 1400px;
-    width: 100%;
+    max-width: 1440px;
+    width: 96vw;
     margin: 0 auto;
-    padding: 1.5rem;
+    padding: 1rem 1.25rem;
 }
 
 /* BEM Navbar Component */

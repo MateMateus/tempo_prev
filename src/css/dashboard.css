@@ -3,19 +3,21 @@
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 1.5rem;
-    margin-top: 1rem;
+    margin-top: 0.75rem;
 }
 
 .dashboard-left {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    min-width: 0; /* Prevents flex/grid children overflow */
 }
 
 .dashboard-right {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
+    min-width: 0;
 }
 
 /* Tabs Header */
@@ -23,17 +25,17 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
 }
 
 .dashboard-tabs__list {
     display: flex;
-    gap: 1rem;
+    gap: 0.85rem;
 }
 
 .dashboard-tabs__btn {
     color: var(--text-muted);
-    font-size: 1.05rem;
+    font-size: 1rem;
     font-weight: 600;
     padding: 0.25rem 0.5rem;
     border-bottom: 2px solid transparent;
@@ -42,7 +44,7 @@
 
 .dashboard-tabs__btn--active, .dashboard-tabs__btn:hover {
     color: var(--text-primary);
-    border-bottom-color: var(--accent-blue);
+    border-bottom-color: var(--text-primary);
 }
 
 /* Weekly 7-Day Forecast Grid */
@@ -50,14 +52,14 @@
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 0.75rem;
+    width: 100%;
 }
 
 .weekly-card {
     background-color: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
-    padding: 0.75rem 0.35rem;
-    text-align: center;
+    padding: 8px 12px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -65,6 +67,8 @@
     gap: 0.4rem;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    min-width: 0;
+    overflow: hidden;
 }
 
 .weekly-card:hover, .weekly-card--active {
@@ -74,7 +78,7 @@
 }
 
 .weekly-card--hero {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), var(--bg-card));
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), var(--bg-card));
     border-color: var(--text-primary);
     box-shadow: var(--shadow-glow);
     grid-column: span 2;
@@ -83,32 +87,39 @@
     padding: 1.25rem;
     cursor: default;
     transform: none;
+    flex-direction: column;
+    justify-content: flex-start;
+    overflow: hidden;
 }
 
 .weekly-card__day {
     font-size: 0.85rem;
     font-weight: 600;
     color: var(--text-secondary);
+    white-space: nowrap;
 }
 
 .weekly-card__icon {
-    font-size: 1.8rem;
+    font-size: 1.6rem;
     margin: 0.15rem 0;
+    display: flex;
+    align-items: center;
 }
 
 .weekly-card__temp {
     font-family: var(--font-number);
-    font-size: 1.6rem;
+    font-size: 1.5rem;
     font-weight: 600;
     color: var(--text-primary);
 }
 
-/* Hero Temp & Icon Side-by-Side */
+/* Hero Temp & Icon Layout */
 .hero-card__temp-row {
     display: flex;
     align-items: center;
     gap: 14px;
     margin: 0.2rem 0;
+    width: 100%;
 }
 
 .hero-card__temp-big {
@@ -120,13 +131,14 @@
 }
 
 .hero-card__icon-big {
-    font-size: 4.8rem;
+    font-size: 4.5rem;
     line-height: 1;
     display: flex;
     align-items: center;
+    color: var(--text-primary);
 }
 
-/* Hero Metrics 2-Column Grid */
+/* Hero Metrics Grid */
 .hero-card__metrics-2col {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -150,16 +162,19 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 0.5rem;
 }
 
 .hero-card__metric-label {
     color: var(--text-muted);
+    white-space: nowrap;
 }
 
 .hero-card__metric-val {
     font-family: var(--font-number);
     font-weight: 600;
     color: var(--text-primary);
+    white-space: nowrap;
 }
 
 /* Rain Chance Panel */
@@ -223,7 +238,7 @@
     font-family: var(--font-number);
 }
 
-/* Featured Brazilian Cities (Matching Reference "Other Large Cities") */
+/* Featured Brazilian Cities */
 .panel-cities {
     background-color: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -292,13 +307,14 @@
 
 .city-item__right {
     display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 0.15rem;
+    align-items: center;
+    gap: 0.4rem; /* Spacing reduced between name and icon */
 }
 
 .city-item__icon {
     font-size: 1.25rem;
+    display: flex;
+    align-items: center;
 }
 
 .city-item__temp-val {
@@ -309,54 +325,102 @@
     line-height: 1;
 }
 
-/* Vector Map Card (Leaflet) */
-.map-card-container {
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    padding: 1.25rem;
+/* Map Section (Clean Header Direct Above Map Div) */
+.map-section {
     display: flex;
     flex-direction: column;
-    gap: 0.85rem;
+    gap: 0.75rem;
+    width: 100%;
 }
 
-.map-card__header {
+.map-section__header {
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-.map-card__header h3 {
+.map-section__title {
     font-family: var(--font-heading);
     font-size: 1.15rem;
     font-weight: 700;
-}
-
-.map-card__btn-layer {
-    font-size: 0.775rem;
-    font-weight: 600;
-    padding: 0.35rem 0.75rem;
-    border-radius: var(--radius-full);
-    background-color: var(--bg-card-hover);
-    border: 1px solid var(--border-color);
-    color: var(--text-primary);
-    cursor: pointer;
-    transition: var(--transition-fast);
-}
-
-.map-card__btn-layer:hover, .map-card__btn-layer--active {
-    border-color: var(--text-primary);
-    background-color: var(--text-primary);
-    color: var(--bg-main);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 #mapa-brasil-leaf {
     width: 100%;
-    height: 300px;
+    height: 420px; /* Spec: minimum 420px height */
     border-radius: var(--radius-md);
     overflow: hidden;
     border: 1px solid var(--border-color);
+    position: relative;
     z-index: 1;
+}
+
+/* Custom Circular Leaflet Controls (Top Right) */
+.leaflet-top.leaflet-right {
+    top: 12px;
+    right: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.leaflet-control-zoom {
+    border: none !important;
+    background: none !important;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0 !important;
+}
+
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 50% !important;
+    background-color: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-color) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+    transition: var(--transition-fast) !important;
+}
+
+.leaflet-control-zoom-in:hover,
+.leaflet-control-zoom-out:hover {
+    background-color: var(--bg-card-hover) !important;
+    border-color: var(--text-primary) !important;
+}
+
+/* Circular Thermal Layer Button (Next to Zoom Controls) */
+.map-btn-thermal-circular {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.map-btn-thermal-circular:hover,
+.map-btn-thermal-circular--active {
+    background-color: var(--text-primary);
+    color: var(--bg-main);
+    border-color: var(--text-primary);
 }
 
 /* Custom Leaflet Map Badges */
@@ -376,12 +440,50 @@
     white-space: nowrap;
 }
 
-/* Mobile Minimalist Flow (Inspired by Reference Image 2) */
+/* Mobile Minimalist Flow */
 .mobile-minimalist-view {
     display: none;
 }
 
-@media (max-width: 768px) {
+/* BREAKPOINT 1024PX (Spec v4.0 Requirement) */
+@media (max-width: 1024px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+
+    .forecast-weekly-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .weekly-card--hero {
+        grid-column: span 4;
+    }
+
+    /* Weather Icon MUST be positioned BELOW numeric temperature */
+    .hero-card__temp-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .hero-card__icon-big {
+        font-size: 3.5rem;
+        margin-top: 0.25rem;
+    }
+
+    /* Stack 6 metrics in individual vertical lines */
+    .hero-card__metrics-2col {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+
+    #mapa-brasil-leaf {
+        height: 380px;
+    }
+}
+
+@media (max-width: 640px) {
     .dashboard-grid {
         display: none;
     }
