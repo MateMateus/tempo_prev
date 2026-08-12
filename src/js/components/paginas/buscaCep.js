@@ -29,33 +29,46 @@ async function buscaCep(app) {
         </div>
     `;
 
-    // Event listeners para CEP
     const formCep = document.getElementById("form-busca-cep");
     const inputCep = document.getElementById("input-cep");
 
     // Máscara automática de CEP (00000-000)
-    inputCep.addEventListener("input", (e) => {
-        let value = e.target.value.replace(/\D/g, "");
-        if (value.length > 5) {
-            value = value.replace(/^(\d{5})(\d)/, "$1-$2");
-        }
-        e.target.value = value;
-    });
+    if (inputCep) {
+        inputCep.addEventListener("input", (e) => {
+            let value = e.target.value.replace(/\D/g, "");
+            if (value.length > 5) {
+                value = value.replace(/^(\d{5})(\d)/, "$1-$2");
+            }
+            e.target.value = value;
+        });
 
-    formCep.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const rawCep = inputCep.value.replace(/\D/g, "");
-        if (rawCep.length !== 8) {
-            alert("Por favor, digite um CEP válido com 8 dígitos.");
-            return;
-        }
+        // Trigger automático de busca ao perder o foco (blur) conforme especificação
+        inputCep.addEventListener("blur", async (e) => {
+            const rawCep = e.target.value.replace(/\D/g, "");
+            if (rawCep.length === 8) {
+                await processarBuscaCep(rawCep);
+            }
+        });
+    }
 
-        await processarBuscaCep(rawCep);
-    });
+    if (formCep) {
+        formCep.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const rawCep = inputCep.value.replace(/\D/g, "");
+            if (rawCep.length !== 8) {
+                alert("Por favor, digite um CEP válido com 8 dígitos.");
+                return;
+            }
+
+            await processarBuscaCep(rawCep);
+        });
+    }
 }
 
 async function processarBuscaCep(cepLimpo) {
     const containerResultado = document.getElementById("cep-resultado-area");
+    if (!containerResultado) return;
+
     containerResultado.innerHTML = `
         <div style="text-align: center; padding: 1.5rem; color: var(--accent-blue);">
             <h3>⏳ Consultando ViaCEP e dados meteorológicos...</h3>
@@ -67,7 +80,7 @@ async function processarBuscaCep(cepLimpo) {
         const viaCepUrl = `https://viacep.com.br/ws/${cepLimpo}/json/`;
         const dadosEndereco = await buscarServicos(viaCepUrl, {}, `viacep-${cepLimpo}`);
 
-        if (dadosEndereco.erro) {
+        if (!dadosEndereco || dadosEndereco.erro) {
             containerResultado.innerHTML = `
                 <div style="padding: 1rem; background-color: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; border-radius: 8px; color: #ef4444;">
                     ❌ CEP não encontrado. Verifique o número digitado.
@@ -104,7 +117,7 @@ async function processarBuscaCep(cepLimpo) {
             `clima-cep-${cepLimpo}`
         );
 
-        const atual = climaData.current_weather;
+        const atual = climaData?.current_weather || { temperature: 20, windspeed: 10 };
         const tempAtual = Math.round(atual.temperature);
         const vento = Math.round(atual.windspeed);
 
@@ -146,7 +159,7 @@ async function processarBuscaCep(cepLimpo) {
                         </div>
                         <div style="font-size: 2.8rem;">🌤️</div>
                     </div>
-                    <div class="hero-card__temp-big">${tempAtual}°C</div>
+                    <div class="hero-card__temp-big" style="font-family: var(--font-number); font-size: 4.2rem;">${tempAtual}°C</div>
                     
                     <div class="hero-card__details-grid" style="grid-template-columns: repeat(3, 1fr);">
                         <div>Vento: ${vento} km/h</div>
