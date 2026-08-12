@@ -1,4 +1,5 @@
 import buscarServicos from "../services/apiCache.js";
+import { SVG_ICONS } from "../icons.js";
 
 const CAPITAIS_BRASILEIRAS = [
     { nome: "São Paulo", estado: "SP", lat: -23.5505, lon: -46.6333 },
@@ -8,23 +9,19 @@ const CAPITAIS_BRASILEIRAS = [
 ];
 
 const CAPITAIS_GLOBAIS = [
-    { nome: "Brasília", pais: "BR", lat: -15.7801, lon: -47.9292, temp: "25°", icone: "☀️" },
-    { nome: "Washington D.C.", pais: "US", lat: 38.9072, lon: -77.0369, temp: "22°", icone: "⛅" },
-    { nome: "Londres", pais: "UK", lat: 51.5074, lon: -0.1278, temp: "16°", icone: "🌧️" },
-    { nome: "Tóquio", pais: "JP", lat: 35.6762, lon: 139.6503, temp: "26°", icone: "☀️" },
-    { nome: "Cairo", pais: "EG", lat: 30.0444, lon: 31.2357, temp: "34°", icone: "☀️" },
-    { nome: "Sydney", pais: "AU", lat: -33.8688, lon: 151.2093, temp: "19°", icone: "⛅" }
+    { nome: "Brasília", pais: "BR", lat: -15.7801, lon: -47.9292, temp: "25°", iconeSvg: SVG_ICONS.weatherSun },
+    { nome: "Washington D.C.", pais: "US", lat: 38.9072, lon: -77.0369, temp: "22°", iconeSvg: SVG_ICONS.weatherCloudSun },
+    { nome: "Londres", pais: "UK", lat: 51.5074, lon: -0.1278, temp: "16°", iconeSvg: SVG_ICONS.weatherRain },
+    { nome: "Tóquio", pais: "JP", lat: 35.6762, lon: 139.6503, temp: "26°", iconeSvg: SVG_ICONS.weatherSun },
+    { nome: "Cairo", pais: "EG", lat: 30.0444, lon: 31.2357, temp: "34°", iconeSvg: SVG_ICONS.weatherSun },
+    { nome: "Sydney", pais: "AU", lat: -33.8688, lon: 151.2093, temp: "19°", iconeSvg: SVG_ICONS.weatherCloudSun }
 ];
 
 function traduzirClimaWmo(codigo) {
-    if (codigo === 0) return { texto: "Ensolarado e Limpo", icone: "☀️", frase: "Dia ensolarado com céu limpo." };
-    if ([1, 2, 3].includes(codigo)) return { texto: "Parcialmente Nublado", icone: "⛅", frase: "Sol com algumas nuvens." };
-    if ([45, 48].includes(codigo)) return { texto: "Nevoeiro", icone: "🌫️", frase: "Nevoeiro com pouca visibilidade." };
-    if ([51, 53, 55, 56, 57].includes(codigo)) return { texto: "Garoa Leve", icone: "🌦️", frase: "Possibilidade de chuviscos finos." };
-    if ([61, 63, 65, 66, 67].includes(codigo)) return { texto: "Chuva Moderada", icone: "🌧️", frase: "Expectativa de chuva durante o dia." };
-    if ([80, 81, 82].includes(codigo)) return { texto: "Pancadas de Chuva", icone: "🌧️", frase: "Expectativa de chuva forte hoje." };
-    if ([95, 96, 99].includes(codigo)) return { texto: "Tempestade", icone: "🌩️", frase: "Alerta de tempestade e trovoadas." };
-    return { texto: "Nublado", icone: "☁️", frase: "Céu encoberto por nuvens." };
+    if (codigo === 0) return { texto: "Ensolarado e Limpo", iconeSvg: SVG_ICONS.weatherSun, frase: "Dia ensolarado com céu limpo." };
+    if ([1, 2, 3].includes(codigo)) return { texto: "Parcialmente Nublado", iconeSvg: SVG_ICONS.weatherCloudSun, frase: "Sol com algumas nuvens." };
+    if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(codigo)) return { texto: "Chuva Moderada", iconeSvg: SVG_ICONS.weatherRain, frase: "Expectativa de chuva durante o dia." };
+    return { texto: "Nublado", iconeSvg: SVG_ICONS.weatherCloudSun, frase: "Céu encoberto por nuvens." };
 }
 
 function obterDiaSemana(dataIso, indice) {
@@ -93,29 +90,29 @@ async function inicio(app, queryParams = {}) {
     const ventoSpeed = Math.round(atual.windspeed);
     const umidadeAtual = climaData?.hourly?.relative_humidity_2m?.[0] ?? 50;
 
-    // Horário dinâmico em tempo real
     const horarioAtualStr = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-    // Preparar dados dinâmicos de probabilidade de chuva (próximas 6 horas)
-    const dadosChuvaDinamicos = (climaData?.hourly?.time || []).slice(0, 6).map((timeStr, idx) => {
-        const hora = timeStr ? timeStr.split("T")[1]?.substring(0, 5) : `${10 + idx}:00`;
-        const pct = climaData?.hourly?.precipitation_probability?.[idx] ?? Math.floor(Math.random() * 60);
-        return { hora, pct };
+    // Cálculo exato de probabilidade de chuva por ciclo de 24h em intervalos de 4 horas [00:00, 04:00, 08:00, 12:00, 16:00, 20:00]
+    const indices24h = [0, 4, 8, 12, 16, 20];
+    const horarRotulos = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'];
+    const dadosChuvaDinamicos = indices24h.map((idxVal, i) => {
+        const pct = climaData?.hourly?.precipitation_probability?.[idxVal] ?? Math.floor(Math.random() * 40);
+        return { hora: horarRotulos[i], pct };
     });
 
     // -------------------------------------------------------------
-    // RENDERIZAÇÃO DA INTERFACE (DESKTOP GRID + MOBILE MINIMALIST)
+    // RENDERIZAÇÃO DA INTERFACE
     // -------------------------------------------------------------
 
     app.innerHTML = `
         <!-- 1. VISUAL MOBILE MINIMALISTA -->
         <div class="mobile-minimalist-view">
             <div class="mobile-location">
-                📍 <span>${cidadeNome}</span>
+                ${SVG_ICONS.location} <span>${cidadeNome}</span>
             </div>
 
             <div class="mobile-hero-icon">
-                ${infoWmo.icone}
+                ${infoWmo.iconeSvg}
             </div>
 
             <div class="mobile-temp-big">
@@ -128,30 +125,30 @@ async function inicio(app, queryParams = {}) {
 
             <div class="mobile-metrics-row">
                 <div class="metric-item">
-                    💨 <span>${ventoSpeed} km/h</span>
+                    ${SVG_ICONS.wind} <span>${ventoSpeed} km/h</span>
                 </div>
                 <div class="metric-item">
-                    💧 <span>${umidadeAtual}%</span>
+                    ${SVG_ICONS.drop} <span>${umidadeAtual}%</span>
                 </div>
                 <div class="metric-item">
-                    ☀️ <span>12h sol</span>
+                    ${SVG_ICONS.sun} <span>12h sol</span>
                 </div>
             </div>
 
             <div class="mobile-hourly-section">
-                <h3>🕒 Previsão por Hora</h3>
+                <h3>Previsão por Hora</h3>
                 <div class="hourly-carousel">
                     ${(climaData?.hourly?.time || []).slice(0, 12).map((timeStr, idx) => {
                         const hora = timeStr ? timeStr.split("T")[1]?.substring(0, 5) || "00:00" : "00:00";
                         const tHora = Math.round(climaData?.hourly?.temperature_2m?.[idx] ?? tempAtual);
                         const codeHora = climaData?.hourly?.weather_code?.[idx] ?? 0;
-                        const iconeHora = traduzirClimaWmo(codeHora).icone;
+                        const iconeHoraSvg = traduzirClimaWmo(codeHora).iconeSvg;
                         const isNow = idx === 0;
 
                         return `
                             <div class="hourly-card ${isNow ? 'hourly-card--active' : ''}">
                                 <span class="hourly-card__time">${isNow ? 'Agora' : hora}</span>
-                                <span class="hourly-card__icon">${iconeHora}</span>
+                                <span class="hourly-card__icon">${iconeHoraSvg}</span>
                                 <span class="hourly-card__temp">${tHora}°</span>
                             </div>
                         `;
@@ -172,16 +169,15 @@ async function inicio(app, queryParams = {}) {
                     </div>
                 </div>
 
-                <!-- Grid Semanal de 7 Dias com Hover Expansivo -->
+                <!-- Grid Semanal de 7 Dias -->
                 <div class="forecast-weekly-grid" id="forecast-grid-container">
                     ${renderForecastGrid(0, climaData, cidadeNome, horarioAtualStr)}
                 </div>
 
-                <!-- Card de Mapa Global Interativo (Leaflet) -->
-                <div class="map-card-container">
-                    <div class="map-card__header">
-                        <h3>🗺️ Condições do Tempo Globais</h3>
-                        <button id="btn-toggle-heatmap" class="map-card__btn-layer">🔥 Camada Térmica</button>
+                <!-- Seção do Mapa Global Leaflet (Sem wrapper div card desnecessário) -->
+                <div class="map-section">
+                    <div class="map-section__header">
+                        <h3 class="map-section__title">${SVG_ICONS.map} Condições do Tempo Globais</h3>
                     </div>
 
                     <div id="mapa-brasil-leaf"></div>
@@ -190,18 +186,18 @@ async function inicio(app, queryParams = {}) {
 
             <!-- Coluna Direita (Painel Lateral) -->
             <div class="dashboard-right">
-                <!-- Painel de Chance de Chuva Dinâmico -->
+                <!-- Painel de Chance de Chuva Dinâmico (Ciclo de 24h) -->
                 <div class="panel-rain">
                     <div class="panel-rain__title">
-                        <span>🌧️ Chance de Chuva</span>
-                        <span style="font-size: 0.8rem; color: var(--text-muted);">Próximas Horas</span>
+                        <span>Chance de Chuva</span>
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">24 Horas</span>
                     </div>
 
                     <div class="rain-chart">
                         ${dadosChuvaDinamicos.map(item => `
                             <div class="rain-chart__col">
                                 <div class="rain-chart__bar-wrap">
-                                    <div class="rain-chart__bar" style="height: ${Math.max(item.pct, 8)}%;"></div>
+                                    <div class="rain-chart__bar" style="height: ${Math.max(item.pct, 6)}%;"></div>
                                 </div>
                                 <span class="rain-chart__label">${item.hora}</span>
                             </div>
@@ -209,10 +205,10 @@ async function inicio(app, queryParams = {}) {
                     </div>
                 </div>
 
-                <!-- Painel de Principais Capitais com Botão Ver Mais -->
+                <!-- Painel de Principais Capitais (Sem prefixo BR) -->
                 <div class="panel-cities">
                     <div class="panel-cities__header">
-                        <h3>🇧🇷 Principais Capitais</h3>
+                        <h3>Principais Capitais</h3>
                         <a href="#capitais" class="panel-cities__btn-more">Ver mais →</a>
                     </div>
                     <div class="panel-cities__list">
@@ -223,7 +219,7 @@ async function inicio(app, queryParams = {}) {
                                     <p>Brasil • ${cap.estado}</p>
                                 </div>
                                 <div class="city-item__right">
-                                    <span class="city-item__icon">☀️</span>
+                                    <span class="city-item__icon">${SVG_ICONS.weatherSun}</span>
                                     <span class="city-item__temp-val">24°</span>
                                 </div>
                             </a>
@@ -234,14 +230,10 @@ async function inicio(app, queryParams = {}) {
         </div>
     `;
 
-    // Event Listeners das Abas e do Hover nos Cards Diários
     initGridHoverEvents(climaData, cidadeNome, horarioAtualStr);
-
-    // Inicialização do Mapa Global Leaflet
     initGlobalVectorMap();
 }
 
-// Renderizador da Grid Semanal (Hero + Cards Compactos)
 function renderForecastGrid(focusedIdx, climaData, cidadeNome, horarioAtualStr) {
     const totalDias = Math.min(climaData?.daily?.time?.length || 7, 7);
     let html = '';
@@ -258,7 +250,6 @@ function renderForecastGrid(focusedIdx, climaData, cidadeNome, horarioAtualStr) 
         const por = climaData?.daily?.sunset?.[i] ? climaData.daily.sunset[i].split("T")[1] : "18:30";
 
         if (i === focusedIdx) {
-            // CARD HERO EXPANDIDO
             html += `
                 <div class="weekly-card weekly-card--hero" data-day-index="${i}">
                     <div style="display: flex; justify-content: space-between; width: 100%;">
@@ -271,11 +262,10 @@ function renderForecastGrid(focusedIdx, climaData, cidadeNome, horarioAtualStr) 
                     
                     <div class="hero-card__temp-row">
                         <div class="hero-card__temp-big">${tMax}°</div>
-                        <div class="hero-card__icon-big">${info.icone}</div>
+                        <div class="hero-card__icon-big">${info.iconeSvg}</div>
                     </div>
                     
                     <div class="hero-card__metrics-2col">
-                        <!-- Coluna Esquerda: 4 Métricas -->
                         <div class="hero-card__metric-col">
                             <div class="hero-card__metric-item">
                                 <span class="hero-card__metric-label">Sensação:</span>
@@ -295,7 +285,6 @@ function renderForecastGrid(focusedIdx, climaData, cidadeNome, horarioAtualStr) 
                             </div>
                         </div>
 
-                        <!-- Coluna Direita: 2 Métricas -->
                         <div class="hero-card__metric-col">
                             <div class="hero-card__metric-item">
                                 <span class="hero-card__metric-label">Vento:</span>
@@ -310,11 +299,10 @@ function renderForecastGrid(focusedIdx, climaData, cidadeNome, horarioAtualStr) 
                 </div>
             `;
         } else {
-            // CARD COMPACTO (Sem rótulo de mínimas)
             html += `
                 <div class="weekly-card" data-day-index="${i}">
                     <span class="weekly-card__day">${diaSemana}</span>
-                    <span class="weekly-card__icon">${info.icone}</span>
+                    <span class="weekly-card__icon">${info.iconeSvg}</span>
                     <span class="weekly-card__temp">${tMax}°</span>
                 </div>
             `;
@@ -333,7 +321,6 @@ function initGridHoverEvents(climaData, cidadeNome, horarioAtualStr) {
         if (newIdx === activeFocusedIdx) return;
         activeFocusedIdx = newIdx;
 
-        // Atualiza estilo das abas
         tabBtns.forEach(btn => {
             const btnVal = btn.getAttribute("data-day-index");
             if ((btnVal === "0" && activeFocusedIdx === 0) || (btnVal === "1" && activeFocusedIdx === 1) || (btnVal === "7dias" && activeFocusedIdx > 1)) {
@@ -362,7 +349,6 @@ function initGridHoverEvents(climaData, cidadeNome, horarioAtualStr) {
         });
     };
 
-    // Listeners nas Abas
     tabBtns.forEach(btn => {
         btn.addEventListener("click", () => {
             const val = btn.getAttribute("data-day-index");
@@ -375,7 +361,7 @@ function initGridHoverEvents(climaData, cidadeNome, horarioAtualStr) {
     bindHoverListeners();
 }
 
-// Inicialização do Mapa Global Leaflet com Zoom/Drag Habilitados e Heatmap Layer
+// Inicialização do Mapa Leaflet com Bounding Box & noWrap Fix
 function initGlobalVectorMap() {
     const mapContainer = document.getElementById("mapa-brasil-leaf");
     if (!mapContainer || typeof L === "undefined") return;
@@ -385,16 +371,24 @@ function initGlobalVectorMap() {
         mapInstance = null;
     }
 
-    // Mapa Global Interativo (Visão do Mundo: setView([20, 0], 2))
+    // Bounding Box travada contra panning infinito (Spec v4.0 Requirement)
+    const bounds = [[-85, -180], [85, 180]];
+
     mapInstance = L.map("mapa-brasil-leaf", {
         center: [20, 0],
         zoom: 2,
+        maxBounds: bounds,
+        maxBoundsViscosity: 1.0,
+        worldCopyJump: false,
         dragging: true,
         touchZoom: true,
         doubleClickZoom: true,
         scrollWheelZoom: false,
         zoomControl: true
     });
+
+    // Reposiciona o controle de zoom para o canto superior direito (topright)
+    mapInstance.zoomControl.setPosition('topright');
 
     const getTileUrl = (theme) => {
         return theme === 'light'
@@ -406,64 +400,72 @@ function initGlobalVectorMap() {
     tileLayerInstance = L.tileLayer(getTileUrl(currentTheme), {
         attribution: '&copy; CartoDB & OpenStreetMap',
         maxZoom: 8,
-        minZoom: 2
+        minZoom: 2,
+        noWrap: true,
+        bounds: bounds
     }).addTo(mapInstance);
 
-    // Sync theme on toggle
     window.addEventListener('themeChanged', (e) => {
         if (mapInstance && tileLayerInstance) {
             mapInstance.removeLayer(tileLayerInstance);
             tileLayerInstance = L.tileLayer(getTileUrl(e.detail.theme), {
                 attribution: '&copy; CartoDB & OpenStreetMap',
                 maxZoom: 8,
-                minZoom: 2
+                minZoom: 2,
+                noWrap: true,
+                bounds: bounds
             }).addTo(mapInstance);
         }
     });
 
-    // 6 Capitais Globais bem espaçadas
-    CAPITAIS_GLOBAIS.forEach(m => {
-        const customIcon = L.divIcon({
-            className: 'leaflet-map-badge',
-            html: `<span>📍 ${m.nome} ${m.temp} ${m.icone}</span>`,
-            iconSize: [110, 26],
-            iconAnchor: [55, 13]
-        });
+    // Injeta Botão Circular de Camada Térmica junto aos Controles de Zoom (topright)
+    const zoomContainer = mapInstance.zoomControl.getContainer();
+    if (zoomContainer) {
+        const thermalBtn = document.createElement('button');
+        thermalBtn.className = 'map-btn-thermal-circular';
+        thermalBtn.title = 'Alternar Camada Térmica';
+        thermalBtn.innerHTML = SVG_ICONS.flame;
 
-        L.marker([m.lat, m.lon], { icon: customIcon }).addTo(mapInstance);
-    });
-
-    // Botão Alternador de Camada Térmica (Heatmap Global)
-    const btnHeatmap = document.getElementById("btn-toggle-heatmap");
-    if (btnHeatmap) {
-        btnHeatmap.addEventListener("click", () => {
+        thermalBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
             isHeatmapActive = !isHeatmapActive;
 
             if (isHeatmapActive) {
-                btnHeatmap.classList.add("map-card__btn-layer--active");
-                btnHeatmap.textContent = "🔥 Camada Térmica Ativa";
-
-                // Adiciona Tile Layer Térmico com opacidade suave (0.45)
+                thermalBtn.classList.add('map-btn-thermal-circular--active');
                 heatmapLayerInstance = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    opacity: 0.45,
-                    maxZoom: 8
+                    opacity: 0.4,
+                    maxZoom: 8,
+                    noWrap: true,
+                    bounds: bounds
                 }).addTo(mapInstance);
             } else {
-                btnHeatmap.classList.remove("map-card__btn-layer--active");
-                btnHeatmap.textContent = "🔥 Camada Térmica";
-
+                thermalBtn.classList.remove('map-btn-thermal-circular--active');
                 if (heatmapLayerInstance) {
                     mapInstance.removeLayer(heatmapLayerInstance);
                     heatmapLayerInstance = null;
                 }
             }
         });
+
+        zoomContainer.appendChild(thermalBtn);
     }
+
+    // 6 Capitais Globais com Badges SVG
+    CAPITAIS_GLOBAIS.forEach(m => {
+        const customIcon = L.divIcon({
+            className: 'leaflet-map-badge',
+            html: `<span>${m.nome} ${m.temp}</span>`,
+            iconSize: [110, 26],
+            iconAnchor: [55, 13]
+        });
+
+        L.marker([m.lat, m.lon], { icon: customIcon }).addTo(mapInstance);
+    });
 }
 
 export default {
     url: "#inicio",
     label: "Dashboard",
-    icone: "🌤️",
+    icone: SVG_ICONS.dashboard,
     pagina: inicio
 };

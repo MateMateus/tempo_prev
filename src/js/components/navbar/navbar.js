@@ -1,18 +1,10 @@
 import buscarServicos from "../services/apiCache.js";
-
-const LOGO_SVG = `
-<svg class="bem-navbar__brand-svg" width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <path d="M12 3V5M5.636 5.636L7.05 7.05M18.364 5.636L16.95 7.05M2 12H4M20 12H22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-  <path d="M16 12C16 9.79086 14.2091 8 12 8C9.79086 8 8 9.79086 8 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-  <path d="M19 16.5C19 15.02 17.7 13.8 16.2 13.8C15.9 13.8 15.6 13.85 15.3 13.95C14.7 12.8 13.5 12 12.1 12C10.3 12 8.8 13.3 8.5 15C8.1 14.7 7.6 14.5 7.1 14.5C5.4 14.5 4 15.9 4 17.6C4 19.3 5.4 20.7 7.1 20.7H16.2C17.7 20.7 19 19.4 19 17.9V16.5Z" fill="currentColor" fill-opacity="0.25" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-</svg>
-`;
+import { SVG_ICONS } from "../icons.js";
 
 function navbar(rotas) {
     const header = document.getElementById('navbar');
     if (!header) return;
     
-    // Recovery saved theme or default 'dark'
     const savedTheme = localStorage.getItem('tempo_prev_theme') || 'dark';
     document.documentElement.setAttribute('data-theme', savedTheme);
     
@@ -21,17 +13,21 @@ function navbar(rotas) {
             <div class="bem-navbar__container">
                 <div class="bem-navbar__left">
                     <button id="btn-toggle-menu" class="bem-navbar__toggle" title="Abrir Menu">
-                        ☰
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="3" y1="12" x2="21" y2="12"/>
+                            <line x1="3" y1="6" x2="21" y2="6"/>
+                            <line x1="3" y1="18" x2="21" y2="18"/>
+                        </svg>
                     </button>
                     <a href="#inicio" class="bem-navbar__brand">
-                        <span class="bem-navbar__brand-icon">${LOGO_SVG}</span>
+                        <span class="bem-navbar__brand-icon">${SVG_ICONS.brandLogo}</span>
                         <span>Tempo Prev</span>
                     </a>
                 </div>
 
                 <div class="bem-navbar__center">
                     <form id="form-busca-rapida" class="bem-navbar__search" autocomplete="off">
-                        <span class="bem-navbar__search-icon">🔍</span>
+                        <span class="bem-navbar__search-icon">${SVG_ICONS.search}</span>
                         <input type="text" id="input-busca-rapida" class="bem-navbar__search-input" placeholder="Pesquisar cidade brasileira (ex: São Paulo, Rio, Salvador)..." />
                         <div id="autocomplete-dropdown" class="bem-navbar__autocomplete"></div>
                     </form>
@@ -39,11 +35,11 @@ function navbar(rotas) {
 
                 <div class="bem-navbar__right">
                     <button id="btn-toggle-theme" class="bem-navbar__theme-btn" title="Alternar Tema">
-                        ${savedTheme === 'dark' ? '☀️' : '🌙'}
+                        ${savedTheme === 'dark' ? SVG_ICONS.sun : SVG_ICONS.moon}
                     </button>
                     
                     <div class="bem-navbar__location-badge" id="navbar-location-badge">
-                        📍 <span id="current-location-text">São Paulo, BR</span>
+                        ${SVG_ICONS.location} <span id="current-location-text">São Paulo, BR</span>
                     </div>
                 </div>
             </div>
@@ -54,7 +50,7 @@ function navbar(rotas) {
         <aside id="drawer-menu" class="bem-drawer">
             <div class="bem-drawer__header">
                 <div class="bem-navbar__brand">
-                    <span class="bem-navbar__brand-icon">${LOGO_SVG}</span>
+                    <span class="bem-navbar__brand-icon">${SVG_ICONS.brandLogo}</span>
                     <span>Tempo Prev</span>
                 </div>
                 <button id="btn-close-drawer" class="bem-drawer__close">&times;</button>
@@ -64,7 +60,7 @@ function navbar(rotas) {
                 ${rotas.map(rota => `
                     <li>
                         <a href="${rota.url}" class="bem-drawer__link" data-url="${rota.url}">
-                            <span class="bem-drawer__icon">${rota.icone || '📍'}</span>
+                            <span class="bem-drawer__icon">${rota.icone || SVG_ICONS.location}</span>
                             <span>${rota.label}</span>
                         </a>
                     </li>
@@ -100,26 +96,22 @@ function initNavbarEvents() {
     if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
     if (overlay) overlay.addEventListener('click', closeDrawer);
 
-    // Close drawer when link is clicked
     document.querySelectorAll('.bem-drawer__link').forEach(link => {
         link.addEventListener('click', closeDrawer);
     });
 
-    // Theme Toggle
     if (themeBtn) {
         themeBtn.addEventListener('click', () => {
             const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', newTheme);
             localStorage.setItem('tempo_prev_theme', newTheme);
-            themeBtn.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+            themeBtn.innerHTML = newTheme === 'dark' ? SVG_ICONS.sun : SVG_ICONS.moon;
             
-            // Emit custom event for components like Leaflet Map to update tile theme
             window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: newTheme } }));
         });
     }
 
-    // Autocomplete Search with Debounce (300ms)
     let debounceTimer;
 
     const closeAutocomplete = () => {
@@ -157,14 +149,13 @@ function initNavbarEvents() {
                                         <strong>${item.name}</strong>
                                         <div class="bem-navbar__autocomplete-sub">${item.admin1 || ''} • Brasil</div>
                                     </div>
-                                    <span>📍</span>
+                                    <span>${SVG_ICONS.location}</span>
                                 </div>
                             `;
                         }).join('');
 
                         autocompleteDropdown.classList.add('bem-navbar__autocomplete--active');
 
-                        // Click event for suggestions
                         autocompleteDropdown.querySelectorAll('.bem-navbar__autocomplete-item').forEach(item => {
                             item.addEventListener('click', () => {
                                 const cidadeSel = item.getAttribute('data-cidade');
@@ -184,14 +175,12 @@ function initNavbarEvents() {
         });
     }
 
-    // Close autocomplete when clicking outside
     document.addEventListener('click', (e) => {
         if (searchForm && !searchForm.contains(e.target)) {
             closeAutocomplete();
         }
     });
 
-    // Quick Search Form Submit
     if (searchForm) {
         searchForm.addEventListener('submit', (e) => {
             e.preventDefault();
