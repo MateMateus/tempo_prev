@@ -66,8 +66,13 @@
     transition: var(--transition-fast);
 }
 
+.weekly-card:hover {
+    border-color: var(--border-highlight);
+    background-color: var(--bg-card-hover);
+}
+
 .weekly-card--hero {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(30, 41, 59, 0.9));
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), var(--bg-card));
     border-color: var(--accent-blue);
     box-shadow: var(--shadow-glow);
     grid-column: span 2;
@@ -88,31 +93,34 @@
 }
 
 .weekly-card__temp {
-    font-family: var(--font-heading);
-    font-size: 1.4rem;
-    font-weight: 700;
+    font-family: var(--font-number);
+    font-size: 1.8rem;
+    font-weight: 600;
     color: var(--text-primary);
 }
 
 .weekly-card__temp-sub {
     font-size: 0.75rem;
     color: var(--text-muted);
+    font-family: var(--font-number);
 }
 
 /* Hero Card Details (Inside Hero) */
 .hero-card__temp-big {
-    font-family: var(--font-heading);
-    font-size: 3.2rem;
-    font-weight: 800;
+    font-family: var(--font-number);
+    font-size: 4.2rem;
+    font-weight: 700;
     color: var(--text-primary);
     line-height: 1;
+    margin: 0.2rem 0;
 }
 
 .hero-card__details-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.5rem;
-    font-size: 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 500;
     color: var(--text-secondary);
     margin-top: 0.5rem;
     width: 100%;
@@ -176,9 +184,10 @@
 .rain-chart__label {
     font-size: 0.725rem;
     color: var(--text-muted);
+    font-family: var(--font-number);
 }
 
-/* Featured Brazilian Cities */
+/* Featured Brazilian Cities (Matching Reference "Other Large Cities") */
 .panel-cities {
     background-color: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -197,9 +206,9 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.75rem;
+    padding: 0.85rem 1rem;
     background-color: var(--bg-card-hover);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
     border: 1px solid var(--border-color);
     transition: var(--transition-fast);
 }
@@ -211,70 +220,82 @@
 
 .city-item__info h4 {
     font-size: 0.95rem;
-    font-weight: 600;
+    font-weight: 700;
+    color: var(--text-primary);
 }
 
 .city-item__info p {
-    font-size: 0.775rem;
-    color: var(--text-muted);
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 0.15rem;
 }
 
-.city-item__temp {
-    font-family: var(--font-heading);
-    font-size: 1.25rem;
-    font-weight: 700;
+.city-item__right {
     display: flex;
-    align-items: center;
-    gap: 0.5rem;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.15rem;
 }
 
-/* Map Card */
-.map-card {
+.city-item__icon {
+    font-size: 1.25rem;
+}
+
+.city-item__temp-val {
+    font-family: var(--font-number);
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1;
+}
+
+/* Vector Map Card (Leaflet) */
+.map-card-container {
     background-color: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     padding: 1.25rem;
-    position: relative;
-    overflow: hidden;
-    min-height: 240px;
-    background-size: cover;
-    background-position: center;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    gap: 0.85rem;
 }
 
-.map-card__overlay {
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(circle at center, rgba(15, 18, 26, 0.4), rgba(15, 18, 26, 0.9));
+.map-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.map-card__header h3 {
+    font-family: var(--font-heading);
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+
+#mapa-brasil-leaf {
+    width: 100%;
+    height: 260px;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
     z-index: 1;
 }
 
-.map-card__content {
-    position: relative;
-    z-index: 2;
-}
-
-.map-pins-container {
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    pointer-events: none;
-}
-
-.map-pin {
-    position: absolute;
-    padding: 0.25rem 0.5rem;
+/* Custom Leaflet Map Badges */
+.leaflet-map-badge {
     background-color: var(--bg-card);
     border: 1px solid var(--accent-blue);
-    border-radius: var(--radius-full);
-    font-size: 0.725rem;
+    color: var(--text-primary);
+    font-family: var(--font-number);
     font-weight: 700;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    font-size: 0.775rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: var(--radius-full);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     display: flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: 0.3rem;
+    white-space: nowrap;
 }
 
 /* Mobile Minimalist Flow (Inspired by Reference Image 2) */
@@ -284,7 +305,7 @@
 
 @media (max-width: 768px) {
     .dashboard-grid {
-        display: none; /* Oculta a grid complexa de PC em telas pequenas */
+        display: none;
     }
 
     .mobile-minimalist-view {
@@ -320,9 +341,9 @@
     }
 
     .mobile-temp-big {
-        font-family: var(--font-heading);
-        font-size: 4.5rem;
-        font-weight: 800;
+        font-family: var(--font-number);
+        font-size: 4.2rem;
+        font-weight: 700;
         color: var(--text-primary);
         line-height: 1;
     }
@@ -356,6 +377,7 @@
         font-size: 0.85rem;
         color: var(--text-secondary);
         font-weight: 600;
+        font-family: var(--font-number);
     }
 
     /* Hourly Forecast Carousel */
@@ -422,7 +444,7 @@
     }
 
     .hourly-card__temp {
-        font-family: var(--font-heading);
+        font-family: var(--font-number);
         font-size: 1.15rem;
         font-weight: 700;
     }
