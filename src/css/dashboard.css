@@ -47,7 +47,7 @@
     border-bottom-color: var(--text-primary);
 }
 
-/* Weekly 7-Day Forecast Grid (Strict Flex Row Layout) */
+/* Weekly 7-Day Forecast Grid */
 .forecast-weekly-grid {
     display: flex;
     flex-direction: row;
@@ -156,7 +156,7 @@
     color: var(--text-primary);
 }
 
-/* Focused Hero Card: Strict Single Vertical List Metrics Layout (Spec v6.0 Requirement) */
+/* Focused Hero Card: Strict Single Vertical List Metrics Layout */
 .hero-card__metrics-vertical {
     display: flex;
     flex-direction: column;
@@ -190,7 +190,7 @@
     white-space: nowrap;
 }
 
-/* Rain Chance Panel & Light Mode High-Contrast Fix (Spec v6.0 Requirement) */
+/* Rain Chance Panel & Light Mode High-Contrast Fix */
 .panel-rain {
     background-color: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -251,7 +251,7 @@
     font-family: var(--font-number);
 }
 
-/* High Contrast Rain Chart Fix in Light Mode (Spec v6.0 Requirement) */
+/* High Contrast Rain Chart Fix in Light Mode */
 [data-theme="light"] .rain-chart__bar-wrap {
     background-color: #E0E0E0 !important;
 }
@@ -472,29 +472,33 @@
     display: none;
 }
 
-/* BREAKPOINT 1024PX & HIGH-RES 1440PX-2560PX SUPPORT */
+/* HIGH-RES SUPPORT (1440px to 2560px) */
 @media (min-width: 1440px) {
     .hero-card__metrics-vertical {
         gap: 0.5rem;
     }
 }
 
-@media (max-width: 1024px) {
+/* BREAKPOINT TABLET/NOTEBOOK 768PX-1024PX (Spec v7.0 Requirement: 4 cards top, 1 hero middle, 2 cards bottom) */
+@media (min-width: 768px) and (max-width: 1024px) {
     .dashboard-grid {
         grid-template-columns: 1fr;
         gap: 1.25rem;
     }
 
     .forecast-weekly-grid {
-        flex-wrap: wrap;
-    }
-
-    .weekly-card {
-        flex: 1 1 calc(25% - 8px);
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
     }
 
     .weekly-card--hero {
-        flex: 1 1 100%;
+        grid-column: span 4;
+        order: 5;
+    }
+
+    .weekly-card:nth-child(n+6) {
+        grid-column: span 2;
     }
 
     .hero-card__temp-row {
@@ -510,6 +514,21 @@
 
     #mapa-brasil-leaf {
         height: 380px;
+    }
+}
+
+@media (max-width: 767px) {
+    .forecast-weekly-grid {
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .weekly-card {
+        flex: 1 1 calc(50% - 8px);
+    }
+
+    .weekly-card--hero {
+        flex: 1 1 100%;
     }
 }
 
@@ -538,11 +557,19 @@
     }
 
     .mobile-hero-icon {
-        font-size: 5.5rem;
+        font-size: 6.5rem;
         line-height: 1;
         margin: 0.5rem 0;
         filter: drop-shadow(0 15px 25px rgba(255, 255, 255, 0.2));
         animation: floatAnimation 4s ease-in-out infinite;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .mobile-hero-icon svg {
+        width: 100px;
+        height: 100px;
     }
 
     @keyframes floatAnimation {
