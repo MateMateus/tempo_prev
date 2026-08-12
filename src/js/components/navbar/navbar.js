@@ -1,5 +1,8 @@
+import buscarServicos from "../services/apiCache.js";
+
 function navbar(rotas) {
     const header = document.getElementById('navbar');
+    if (!header) return;
     
     // Recovery saved theme or default 'dark'
     const savedTheme = localStorage.getItem('tempo_prev_theme') || 'dark';
@@ -13,15 +16,16 @@ function navbar(rotas) {
                         ☰
                     </button>
                     <a href="#inicio" class="bem-navbar__brand">
-                        <span class="bem-navbar__brand-icon">⚡</span>
-                        <span>tempo_prev</span>
+                        <span class="bem-navbar__brand-icon">☀️⛅</span>
+                        <span>Tempo Prev</span>
                     </a>
                 </div>
 
                 <div class="bem-navbar__center">
-                    <form id="form-busca-rapida" class="bem-navbar__search">
+                    <form id="form-busca-rapida" class="bem-navbar__search" autocomplete="off">
                         <span class="bem-navbar__search-icon">🔍</span>
-                        <input type="text" id="input-busca-rapida" class="bem-navbar__search-input" placeholder="Pesquisar cidade (ex: São Paulo, Rio, Curitiba)..." />
+                        <input type="text" id="input-busca-rapida" class="bem-navbar__search-input" placeholder="Pesquisar cidade brasileira (ex: São Paulo, Rio, Salvador)..." />
+                        <div id="autocomplete-dropdown" class="bem-navbar__autocomplete"></div>
                     </form>
                 </div>
 
@@ -33,10 +37,6 @@ function navbar(rotas) {
                     <div class="bem-navbar__location-badge" id="navbar-location-badge">
                         📍 <span id="current-location-text">São Paulo, BR</span>
                     </div>
-
-                    <div class="bem-navbar__avatar" title="Perfil do Usuário">
-                        M
-                    </div>
                 </div>
             </div>
         </nav>
@@ -46,8 +46,8 @@ function navbar(rotas) {
         <aside id="drawer-menu" class="bem-drawer">
             <div class="bem-drawer__header">
                 <div class="bem-navbar__brand">
-                    <span class="bem-navbar__brand-icon">⚡</span>
-                    <span>tempo_prev</span>
+                    <span class="bem-navbar__brand-icon">☀️⛅</span>
+                    <span>Tempo Prev</span>
                 </div>
                 <button id="btn-close-drawer" class="bem-drawer__close">&times;</button>
             </div>
@@ -65,7 +65,6 @@ function navbar(rotas) {
         </aside>
     `;
 
-    // Event listeners
     initNavbarEvents();
 }
 
@@ -77,15 +76,16 @@ function initNavbarEvents() {
     const themeBtn = document.getElementById('btn-toggle-theme');
     const searchForm = document.getElementById('form-busca-rapida');
     const searchInput = document.getElementById('input-busca-rapida');
+    const autocompleteDropdown = document.getElementById('autocomplete-dropdown');
 
     const openDrawer = () => {
-        drawer.classList.add('bem-drawer--open');
-        overlay.classList.add('bem-drawer__overlay--active');
+        if (drawer) drawer.classList.add('bem-drawer--open');
+        if (overlay) overlay.classList.add('bem-drawer__overlay--active');
     };
 
     const closeDrawer = () => {
-        drawer.classList.remove('bem-drawer--open');
-        overlay.classList.remove('bem-drawer__overlay--active');
+        if (drawer) drawer.classList.remove('bem-drawer--open');
+        if (overlay) overlay.classList.remove('bem-drawer__overlay--active');
     };
 
     if (toggleBtn) toggleBtn.addEventListener('click', openDrawer);
@@ -105,10 +105,85 @@ function initNavbarEvents() {
             document.documentElement.setAttribute('data-theme', newTheme);
             localStorage.setItem('tempo_prev_theme', newTheme);
             themeBtn.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+            
+            // Emit custom event for components like Leaflet Map to update tile theme
+            window.dispatchEvent(new CustomEvent('themeChanged', { detail: { theme: newTheme } }));
         });
     }
 
-    // Quick Search Form
+    // Autocomplete Search with Debounce (300ms)
+    let debounceTimer;
+
+    const closeAutocomplete = () => {
+        if (autocompleteDropdown) {
+            autocompleteDropdown.innerHTML = '';
+            autocompleteDropdown.classList.remove('bem-navbar__autocomplete--active');
+        }
+    };
+
+    if (searchInput && autocompleteDropdown) {
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.trim();
+            clearTimeout(debounceTimer);
+
+            if (query.length < 2) {
+                closeAutocomplete();
+                return;
+            }
+
+            debounceTimer = setTimeout(async () => {
+                try {
+                    const geoData = await buscarServicos(
+                        "https://geocoding-api.open-meteo.com/v1/search",
+                        { name: query, count: 3, language: "pt", format: "json" },
+                        `autocomplete-${query}`
+                    );
+
+                    if (geoData && geoData.results && geoData.results.length > 0) {
+                        const sugestoes = geoData.results.slice(0, 3);
+                        autocompleteDropdown.innerHTML = sugestoes.map(item => {
+                            const nomeComp = `${item.name}, ${item.admin1 || item.country_code || 'BR'}`;
+                            return `
+                                <div class="bem-navbar__autocomplete-item" data-cidade="${nomeComp}">
+                                    <div>
+                                        <strong>${item.name}</strong>
+                                        <div class="bem-navbar__autocomplete-sub">${item.admin1 || ''} • Brasil</div>
+                                    </div>
+                                    <span>📍</span>
+                                </div>
+                            `;
+                        }).join('');
+
+                        autocompleteDropdown.classList.add('bem-navbar__autocomplete--active');
+
+                        // Click event for suggestions
+                        autocompleteDropdown.querySelectorAll('.bem-navbar__autocomplete-item').forEach(item => {
+                            item.addEventListener('click', () => {
+                                const cidadeSel = item.getAttribute('data-cidade');
+                                window.location.hash = `#inicio?cidade=${encodeURIComponent(cidadeSel)}`;
+                                searchInput.value = '';
+                                closeAutocomplete();
+                            });
+                        });
+                    } else {
+                        closeAutocomplete();
+                    }
+                } catch (err) {
+                    console.error("Erro no autocomplete:", err);
+                    closeAutocomplete();
+                }
+            }, 300);
+        });
+    }
+
+    // Close autocomplete when clicking outside
+    document.addEventListener('click', (e) => {
+        if (searchForm && !searchForm.contains(e.target)) {
+            closeAutocomplete();
+        }
+    });
+
+    // Quick Search Form Submit
     if (searchForm) {
         searchForm.addEventListener('submit', (e) => {
             e.preventDefault();
@@ -116,6 +191,7 @@ function initNavbarEvents() {
             if (cidade) {
                 window.location.hash = `#inicio?cidade=${encodeURIComponent(cidade)}`;
                 searchInput.value = '';
+                closeAutocomplete();
             }
         });
     }
