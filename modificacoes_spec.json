@@ -1,0 +1,81 @@
+{
+  "versao_spec": "2.0",
+  "projeto": "tempo_prev",
+  "meta_refatoracao": "Refatoração visual (UI/UX) fiel à interface de referência, aprimoramento de interatividade em abas, autocomplete de busca, mapa vetorial georreferenciado e fluxo automatizado de Git/GitHub.",
+  "modificacoes": {
+    "paleta_e_tema": {
+      "dark_mode": {
+        "fundo_principal": "#121316",
+        "fundo_card": "#1A1C20",
+        "fundo_card_hover": "#22252A",
+        "texto_primario": "#FFFFFF",
+        "texto_secundario": "#9E9E9E",
+        "borda": "#2A2D34"
+      },
+      "sincronizacao_global": "Garantir aplicação uniforme dos tokens CSS de variáveis (`[data-theme='dark']` / `[data-theme='light']`) em todas as rotas da SPA (#inicio, #busca-cep, #sp-regioes, #sobre)."
+    },
+    "tipografia_e_escalas": {
+      "fonte_principal": "Inter, 'Plus Jakarta Sans', system-ui, sans-serif",
+      "fonte_numerica": "Sora, 'Orbitron', sans-serif",
+      "hierarquia": {
+        "temperatura_destaque": "4.2rem / peso 700",
+        "temperatura_cards_menores": "1.8rem / peso 600",
+        "subtitulos_e_labels": "0.85rem / peso 500"
+      }
+    },
+    "header_e_branding": {
+      "logo": {
+        "icone": "Sol com nuvem (SVG / Émoj ☀️⛅)",
+        "texto": "Tempo Prev",
+        "formata_texto": "T maiúsculo, espaço simples, sem underscore"
+      },
+      "remover_elementos": [
+        "Avatar de perfil do usuário ('M')"
+      ],
+      "autocomplete_busca": {
+        "trigger": "Input de busca de cidades na navbar",
+        "comportamento": "Exibir dropdown dinâmico com debounce de 300ms conforme digitação do usuário",
+        "limite_sugestoes": 3,
+        "escopo": "Municípios/capitais brasileiras"
+      }
+    },
+    "dashboard_inicio": {
+      "abas_periodo": {
+        "opcoes": ["Hoje", "Amanhã", "Próximos 7 dias"],
+        "comportamento_hoje": "Exibir card hero principal expandido com métricas detalhadas do dia atual (sensação, vento, umidade, pressão, sol)",
+        "comportamento_amanha": "Substituir dinamicamente o card hero pelas métricas detalhadas da previsão do dia seguinte",
+        "comportamento_7dias": "Exibir o carrossel/grid completo de 7 dias com cards menores (números das temperaturas ampliados) e altura de card reajustada para dar vazão ao mapa"
+      },
+      "card_capitais": {
+        "layout": "Redimensionar para padronização visual similar ao card 'Other large cities' da imagem de referência (nome no topo esquerdo, ícone e temperatura grande no topo/inferior direito)",
+        "tipografia_graus": "Aumentar tamanho relativo da fonte dos graus (°C)"
+      },
+      "mapa_brasil": {
+        "tipo": "Mapa vetorial real do Brasil (Leaflet / SVG)",
+        "interatividade": "Locked (pan/zoom desabilitados)",
+        "marcadores": "Badges/balões de clima em posições geográficas exatas das capitais (SP, RJ, DF, BA, etc.)",
+        "tema": "Alternar estilos/tilesets automaticamente na troca de tema Dark/Light"
+      }
+    },
+    "pagina_busca_cep": {
+      "evento_disparo": "Trigger automático da busca ao disparar o evento 'blur' do input (quando o usuário digita o CEP e perde o foco do campo)"
+    },
+    "pagina_sp_regioes": {
+      "interatividade": "Ao clicar no botão 'Ver detalhes' de qualquer card regional, expandir suavemente um card sanfona (accordion) / drawer contendo métricas meteorológicas detalhadas daquela localidade"
+    },
+    "footer": {
+      "texto_unico": "Tempo Prev — Previsão do Tempo Brasil © 2026 • Mateus Braga (MateMateus)"
+    }
+  },
+  "workflow_git": {
+    "branch_desenvolvimento": "feature/refactor-ui-ux-v2",
+    "commits_semanticos": true,
+    "passos": [
+      "Criar e alternar para a branch feature/refactor-ui-ux-v2",
+      "Implementar modificações em commits isolados por módulo",
+      "Validar execução local e ausência de erros no console",
+      "Fazer o merge na branch main",
+      "Executar o push para origin main no GitHub"
+    ]
+  }
+}
