@@ -1,0 +1,55 @@
+{
+  "versao_spec": "3.0",
+  "projeto": "tempo_prev",
+  "objetivo": "Aprimoramento de UI/UX, correção de bugs de estado de renderização no Dashboard, remoção de acentos azuis em prol de paleta monocromática, integração de dados dinâmicos de chuva, mapa global interativo e criação da nova rota de Capitais do Brasil.",
+  "modificacoes": {
+    "identidade_e_branding": {
+      "logo_simbolo": "Ícone vetorial monocromático em SVG representando o pôr do sol atrás de uma nuvem (totalmente branco no Dark Mode / escuro no Light Mode), conforme a referência visual enviada.",
+      "remocao_tons_azuis": {
+        "dark_mode": "Substituir todas as variáveis CSS de destaque azul (`--accent-color`) por branco (`#FFFFFF`) ou cinza claro (`#E0E0E0`).",
+        "light_mode": "Substituir destaques por preto/cinza escuro (`#121316` / `#2A2D34`)."
+      }
+    },
+    "hero_card_clima": {
+      "layout_e_posicionamento": {
+        "horario_atual": "Exibir o horário dinâmico em tempo real (ex: '14:35') na posição superior onde antes ficava o ícone estático.",
+        "temperatura_e_icone": "Posicionar o ícone climático (emoji/SVG) ao lado direito da temperatura numérica. O ícone deve ser levemente maior que a fonte da temperatura, garantindo alinhamento `align-items: center` sem sobreposição de camadas.",
+        "grid_metricas": "Organizar os dados meteorológicos em colunas estruturadas: 4 métricas alinhadas na coluna da esquerda (Sensação, Umidade, Nascer do Sol, Pôr do Sol) e 2 na coluna da direita (Vento, Pressão)."
+      }
+    },
+    "carrossel_semanal_e_bugs_de_estado": {
+      "cards_diarios": {
+        "redimensionamento": "Diminuir a largura/altura dos cards compactos secundários.",
+        "limpeza_labels": "Remover a exibição da temperatura mínima (`17° min`)."
+      },
+      "bugfix_e_interatividade_hover": {
+        "correcao_duplicacao": "Corrigir bug de desincronização de estado ao alternar entre as abas 'Hoje' e 'Amanhã', garantindo a destruição limpa do DOM antes de cada rerenderização.",
+        "comportamento_hover": "Ao passar o cursor (`mouseenter`) sobre qualquer card compacto da semana, expandir o card focado para o estado Hero (com métricas completas) e recolher o card anterior. O estado expandido deve persistir até que o usuário foque outro card.",
+        "abas_hoje_amanha": "O clique nas abas 'Hoje' e 'Amanhã' deve forçar a expansão do respectivo card correspondente sem duplicar o container principal."
+      }
+    },
+    "componente_principais_capitais_e_nova_rota": {
+      "reestruturacao_dashboard": "Simplificar o container de 'Principais Capitais' no Dashboard, removendo wrappers de cards aninhados desnecessários.",
+      "cabecalho": "Adicionar o botão 'Ver mais' ao lado do título 'Principais Capitais'.",
+      "nova_pagina_capitais": {
+        "rota": "#capitais",
+        "modulo_js": "src/js/components/paginas/capitais.js",
+        "estilo_css": "src/css/capitais.css",
+        "conteudo": "Grid de monitoramento climático para 8 capitais brasileiras de grande relevância (São Paulo, Rio de Janeiro, Brasília, Salvador, Curitiba, Manaus, Recife, Porto Alegre), reutilizando a mecânica interativa de cards sanfona/drawer do módulo `#sp-regioes`."
+      }
+    },
+    "mapa_global_interativo": {
+      "escopo_geografico": "Expandir o mapa vetorial Leaflet para visualização global (World Map view).",
+      "interatividade": "Habilitar comandos de zoom (`zoomControl: true`) e navegação livre por arrasto (`dragging: true`).",
+      "marcadores_globais": "Fixar badges/pins de temperatura em 6 capitais globais estrategicamente espaçadas para evitar sobreposição (ex: Brasília, Washington D.C., Londres, Tóquio, Cairo, Sydney).",
+      "camada_heatmap": "Incluir botão alternador de camada para visualização de Mapa Térmico Global (Global Temperature Layer), utilizando gradientes suaves de opacidade média sem picos de contraste agressivo."
+    },
+    "precipitacao_dinamica": {
+      "chance_de_chuva": "Vincular o gráfico de barras diretamente ao array de probabilidade de precipitação por hora (`hourly.precipitation_probability`) retornado pela API da Open-Meteo para a cidade atualmente selecionada."
+    }
+  },
+  "workflow_git": {
+    "branch_desenvolvimento": "feature/refactor-ui-v3-bugs-and-map",
+    "commits_semanticos": true
+  }
+}

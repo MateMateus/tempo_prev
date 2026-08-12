@@ -1,5 +1,13 @@
 import buscarServicos from "../services/apiCache.js";
 
+const LOGO_SVG = `
+<svg class="bem-navbar__brand-svg" width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M12 3V5M5.636 5.636L7.05 7.05M18.364 5.636L16.95 7.05M2 12H4M20 12H22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  <path d="M16 12C16 9.79086 14.2091 8 12 8C9.79086 8 8 9.79086 8 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  <path d="M19 16.5C19 15.02 17.7 13.8 16.2 13.8C15.9 13.8 15.6 13.85 15.3 13.95C14.7 12.8 13.5 12 12.1 12C10.3 12 8.8 13.3 8.5 15C8.1 14.7 7.6 14.5 7.1 14.5C5.4 14.5 4 15.9 4 17.6C4 19.3 5.4 20.7 7.1 20.7H16.2C17.7 20.7 19 19.4 19 17.9V16.5Z" fill="currentColor" fill-opacity="0.25" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+</svg>
+`;
+
 function navbar(rotas) {
     const header = document.getElementById('navbar');
     if (!header) return;
@@ -16,7 +24,7 @@ function navbar(rotas) {
                         ☰
                     </button>
                     <a href="#inicio" class="bem-navbar__brand">
-                        <span class="bem-navbar__brand-icon">☀️⛅</span>
+                        <span class="bem-navbar__brand-icon">${LOGO_SVG}</span>
                         <span>Tempo Prev</span>
                     </a>
                 </div>
@@ -46,7 +54,7 @@ function navbar(rotas) {
         <aside id="drawer-menu" class="bem-drawer">
             <div class="bem-drawer__header">
                 <div class="bem-navbar__brand">
-                    <span class="bem-navbar__brand-icon">☀️⛅</span>
+                    <span class="bem-navbar__brand-icon">${LOGO_SVG}</span>
                     <span>Tempo Prev</span>
                 </div>
                 <button id="btn-close-drawer" class="bem-drawer__close">&times;</button>

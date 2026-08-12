@@ -1,5 +1,5 @@
 :root {
-    /* Color Palette - Dark Mode Matte (Default) */
+    /* Color Palette - Dark Mode Monochromatic (Default) */
     --bg-main: #121316;
     --bg-card: #1A1C20;
     --bg-card-hover: #22252A;
@@ -10,17 +10,18 @@
     --text-secondary: #9E9E9E;
     --text-muted: #6C727F;
     
-    --accent-blue: #3B82F6;
-    --accent-blue-hover: #2563EB;
-    --accent-cyan: #06B6D4;
-    --accent-amber: #F59E0B;
-    --accent-purple: #8B5CF6;
+    /* Monochromatic Accents (Dark Mode: White / Light Grey) */
+    --accent-blue: #FFFFFF;
+    --accent-blue-hover: #E0E0E0;
+    --accent-cyan: #CCCCCC;
+    --accent-amber: #FFFFFF;
+    --accent-purple: #E0E0E0;
     
     --border-color: #2A2D34;
     --border-highlight: #3A3E47;
     
     --shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
-    --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.2);
+    --shadow-glow: 0 0 20px rgba(255, 255, 255, 0.1);
     
     /* Typography Tokens */
     --font-heading: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
@@ -48,9 +49,16 @@
     --text-secondary: #666666;
     --text-muted: #9E9E9E;
     
+    /* Monochromatic Accents (Light Mode: Dark Graphite / Black) */
+    --accent-blue: #121316;
+    --accent-blue-hover: #2A2D34;
+    --accent-cyan: #333333;
+    --accent-amber: #121316;
+    --accent-purple: #2A2D34;
+    
     --border-color: #E2E4E8;
     --border-highlight: #CBD5E1;
     
     --shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.06), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
-    --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.15);
+    --shadow-glow: 0 0 20px rgba(0, 0, 0, 0.08);
 }
