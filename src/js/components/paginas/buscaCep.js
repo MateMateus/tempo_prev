@@ -2,6 +2,8 @@ import buscarServicos from "../services/apiCache.js";
 import { SVG_ICONS } from "../icons.js";
 
 let cepMapInstance = null;
+let cepTileLayerInstance = null;
+let cepPolygonInstance = null;
 
 function traduzirClimaWmo(codigo) {
     if (codigo === 0) return { texto: "Ensolarado e Limpo", iconeSvg: SVG_ICONS.weatherSun };
@@ -131,7 +133,6 @@ async function processarBuscaCep(cepLimpo) {
         const umidade = climaData?.hourly?.relative_humidity_2m?.[0] ?? 60;
         const infoWmo = traduzirClimaWmo(atual.weathercode);
 
-        // Substituição de Lat/Long por Sensação, Umidade, Vento e Condição Climática (Spec v5.0)
         containerResultado.innerHTML = `
             <div style="border-top: 1px solid var(--border-color); padding-top: 1.5rem; margin-top: 1rem;">
                 <h3 style="font-family: var(--font-heading); margin-bottom: 1rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
@@ -179,17 +180,16 @@ async function processarBuscaCep(cepLimpo) {
                     </div>
                 </div>
 
-                <!-- Mini-Mapa do Bairro (Spec v5.0) -->
+                <!-- Mini-Mapa do Bairro com Delimitação de Polígono -->
                 <div style="margin-top: 1.5rem;">
                     <h3 style="font-family: var(--font-heading); margin-bottom: 0.75rem; font-size: 1.05rem; display: flex; align-items: center; gap: 0.5rem;">
-                        ${SVG_ICONS.map} Localização no Mapa
+                        ${SVG_ICONS.map} Área Geográfica do Bairro
                     </h3>
                     <div id="cep-map"></div>
                 </div>
             </div>
         `;
 
-        // Renderiza o mini-mapa Leaflet centralizado no bairro com destruição defensiva previa
         initCepMiniMap(lat, lon, `${dadosEndereco.bairro || dadosEndereco.localidade}`);
 
     } catch (err) {
@@ -202,12 +202,12 @@ async function processarBuscaCep(cepLimpo) {
     }
 }
 
-// Inicializa o Mini-Mapa Leaflet do Bairro
+// Inicializa o Mini-Mapa Leaflet do Bairro com Polígono e Sincronização de Tema (Spec v6.0 Requirement)
 function initCepMiniMap(lat, lon, bairroNome) {
     const mapContainer = document.getElementById("cep-map");
     if (!mapContainer || typeof L === "undefined") return;
 
-    // Destruição defensiva da instância anterior (Evita "Map container is already initialized")
+    // Destruição defensiva de instâncias prévias
     if (cepMapInstance) {
         cepMapInstance.remove();
         cepMapInstance = null;
@@ -221,25 +221,60 @@ function initCepMiniMap(lat, lon, bairroNome) {
         zoomControl: true
     });
 
-    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-    const tileUrl = currentTheme === 'light'
-        ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png'
-        : 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}/{y}{r}.png';
+    const getTileUrl = (theme) => {
+        return theme === 'light'
+            ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png'
+            : 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}/{y}{r}.png';
+    };
 
-    L.tileLayer(tileUrl, {
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+    
+    cepTileLayerInstance = L.tileLayer(getTileUrl(currentTheme), {
         attribution: '&copy; CartoDB & OpenStreetMap',
         maxZoom: 18
     }).addTo(cepMapInstance);
 
-    // Marcador customizado no bairro do CEP
+    // Polígono / Bounding Box Vetorial demarcando o perímetro do bairro (Spec v6.0 Requirement)
+    const boundsRectangle = [
+        [lat - 0.008, lon - 0.012],
+        [lat + 0.008, lon + 0.012]
+    ];
+
+    const getPolygonStyle = (theme) => ({
+        color: theme === 'light' ? '#121316' : '#FFFFFF',
+        weight: 2,
+        fillColor: theme === 'light' ? '#121316' : '#FFFFFF',
+        fillOpacity: 0.12,
+        dashArray: '4, 4'
+    });
+
+    cepPolygonInstance = L.rectangle(boundsRectangle, getPolygonStyle(currentTheme)).addTo(cepMapInstance);
+
+    // Marcador customizado com Badge
     const customIcon = L.divIcon({
         className: 'leaflet-map-badge',
-        html: `<span>📍 ${bairroNome}</span>`,
-        iconSize: [120, 26],
-        iconAnchor: [60, 13]
+        html: `<span>📍 Bairro: ${bairroNome}</span>`,
+        iconSize: [140, 26],
+        iconAnchor: [70, 13]
     });
 
     L.marker([lat, lon], { icon: customIcon }).addTo(cepMapInstance);
+
+    // Sincronização de Tema no Mini-Mapa de CEP (Spec v6.0 Requirement)
+    window.addEventListener('themeChanged', (e) => {
+        if (cepMapInstance && cepTileLayerInstance) {
+            const newTheme = e.detail.theme;
+            cepMapInstance.removeLayer(cepTileLayerInstance);
+            cepTileLayerInstance = L.tileLayer(getTileUrl(newTheme), {
+                attribution: '&copy; CartoDB & OpenStreetMap',
+                maxZoom: 18
+            }).addTo(cepMapInstance);
+
+            if (cepPolygonInstance) {
+                cepPolygonInstance.setStyle(getPolygonStyle(newTheme));
+            }
+        }
+    });
 }
 
 export default {
