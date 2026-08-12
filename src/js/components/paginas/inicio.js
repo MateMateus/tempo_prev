@@ -247,6 +247,7 @@ function renderForecastGrid(focusedIdx, climaData, cidadeNome, horarioAtualStr) 
         const por = climaData?.daily?.sunset?.[i] ? climaData.daily.sunset[i].split("T")[1] : "18:30";
 
         if (i === focusedIdx) {
+            // CARD HERO: 6 métricas em lista vertical única (Spec v6.0 Requirement)
             html += `
                 <div class="weekly-card weekly-card--hero" data-day-index="${i}">
                     <div style="display: flex; justify-content: space-between; width: 100%;">
@@ -262,35 +263,30 @@ function renderForecastGrid(focusedIdx, climaData, cidadeNome, horarioAtualStr) 
                         <div class="hero-card__icon-big">${info.iconeSvg}</div>
                     </div>
                     
-                    <div class="hero-card__metrics-2col">
-                        <div class="hero-card__metric-col">
-                            <div class="hero-card__metric-item">
-                                <span class="hero-card__metric-label">Sensação:</span>
-                                <span class="hero-card__metric-val">${tMax - 1}°C</span>
-                            </div>
-                            <div class="hero-card__metric-item">
-                                <span class="hero-card__metric-label">Umidade:</span>
-                                <span class="hero-card__metric-val">${umidade}%</span>
-                            </div>
-                            <div class="hero-card__metric-item">
-                                <span class="hero-card__metric-label">Nascer do Sol:</span>
-                                <span class="hero-card__metric-val">${nascer}</span>
-                            </div>
-                            <div class="hero-card__metric-item">
-                                <span class="hero-card__metric-label">Pôr do Sol:</span>
-                                <span class="hero-card__metric-val">${por}</span>
-                            </div>
+                    <div class="hero-card__metrics-vertical">
+                        <div class="hero-card__metric-item">
+                            <span class="hero-card__metric-label">Sensação Térmica:</span>
+                            <span class="hero-card__metric-val">${tMax - 1}°C</span>
                         </div>
-
-                        <div class="hero-card__metric-col">
-                            <div class="hero-card__metric-item">
-                                <span class="hero-card__metric-label">Vento:</span>
-                                <span class="hero-card__metric-val">${vento} km/h</span>
-                            </div>
-                            <div class="hero-card__metric-item">
-                                <span class="hero-card__metric-label">Pressão:</span>
-                                <span class="hero-card__metric-val">1013 hPa</span>
-                            </div>
+                        <div class="hero-card__metric-item">
+                            <span class="hero-card__metric-label">Umidade Relativa:</span>
+                            <span class="hero-card__metric-val">${umidade}%</span>
+                        </div>
+                        <div class="hero-card__metric-item">
+                            <span class="hero-card__metric-label">Velocidade do Vento:</span>
+                            <span class="hero-card__metric-val">${vento} km/h</span>
+                        </div>
+                        <div class="hero-card__metric-item">
+                            <span class="hero-card__metric-label">Pressão Atmosférica:</span>
+                            <span class="hero-card__metric-val">1013 hPa</span>
+                        </div>
+                        <div class="hero-card__metric-item">
+                            <span class="hero-card__metric-label">Nascer do Sol:</span>
+                            <span class="hero-card__metric-val">${nascer}</span>
+                        </div>
+                        <div class="hero-card__metric-item">
+                            <span class="hero-card__metric-label">Pôr do Sol:</span>
+                            <span class="hero-card__metric-val">${por}</span>
                         </div>
                     </div>
                 </div>
@@ -358,12 +354,11 @@ function initGridHoverEvents(climaData, cidadeNome, horarioAtualStr) {
     bindHoverListeners();
 }
 
-// Inicialização do Mapa Leaflet sem Rótulos CJK e com Camadas Térmica & Chuva
+// Inicialização do Mapa Leaflet sem Rótulos CJK e com Camadas Reais (Térmica + Chuva)
 function initGlobalVectorMap() {
     const mapContainer = document.getElementById("mapa-brasil-leaf");
     if (!mapContainer || typeof L === "undefined") return;
 
-    // Destruição defensiva de instâncias prévias (Evita "Map container is already initialized")
     if (mapInstance) {
         mapInstance.remove();
         mapInstance = null;
@@ -386,7 +381,7 @@ function initGlobalVectorMap() {
 
     mapInstance.zoomControl.setPosition('topright');
 
-    // Tileset higienizado em Alfabeto Latino Sem Rótulos CJK (CartoDB Voyager / Dark Matter No Labels)
+    // Base tileset em Alfabeto Latino sem ideogramas asiáticos/CJK (Spec v6.0 Requirement)
     const getTileUrl = (theme) => {
         return theme === 'light'
             ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png'
@@ -415,15 +410,12 @@ function initGlobalVectorMap() {
         }
     });
 
-    // Injeta dois botões circulares no controle do Leaflet (topright):
-    // 1. Botão de Camada Térmica (Foguinho)
-    // 2. Botão de Radar de Precipitação (Nuvem de Chuva)
     const zoomContainer = mapInstance.zoomControl.getContainer();
     if (zoomContainer) {
-        // 1. Botão Térmico
+        // 1. Botão Térmico Real (Foguinho)
         const thermalBtn = document.createElement('button');
         thermalBtn.className = 'map-btn-control-circular';
-        thermalBtn.title = 'Alternar Camada Térmica de Temperatura';
+        thermalBtn.title = 'Alternar Gradiente Térmico de Temperatura';
         thermalBtn.innerHTML = SVG_ICONS.flame;
 
         thermalBtn.addEventListener('click', (e) => {
@@ -432,8 +424,9 @@ function initGlobalVectorMap() {
 
             if (isHeatmapActive) {
                 thermalBtn.classList.add('map-btn-control-circular--active');
-                heatmapLayerInstance = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    opacity: 0.4,
+                // OpenWeatherMap Temperature Layer / Temperature Gradient Overlay
+                heatmapLayerInstance = L.tileLayer('https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=93e786b1c31317540274e76a6669fb7a', {
+                    opacity: 0.5,
                     maxZoom: 8,
                     noWrap: true,
                     bounds: bounds
@@ -447,10 +440,10 @@ function initGlobalVectorMap() {
             }
         });
 
-        // 2. Botão de Chuva / Precipitação
+        // 2. Botão de Radar de Precipitação Real (Chuva)
         const rainBtn = document.createElement('button');
         rainBtn.className = 'map-btn-control-circular';
-        rainBtn.title = 'Alternar Radar de Chuva / Precipitação';
+        rainBtn.title = 'Alternar Radar de Precipitação de Chuva';
         rainBtn.innerHTML = SVG_ICONS.rain;
 
         rainBtn.addEventListener('click', (e) => {
@@ -459,9 +452,9 @@ function initGlobalVectorMap() {
 
             if (isRainActive) {
                 rainBtn.classList.add('map-btn-control-circular--active');
-                // Overlay de radar de precipitação
-                rainLayerInstance = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png', {
-                    opacity: 0.55,
+                // OpenWeatherMap Precipitation Radar Overlay
+                rainLayerInstance = L.tileLayer('https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=93e786b1c31317540274e76a6669fb7a', {
+                    opacity: 0.6,
                     maxZoom: 8,
                     noWrap: true,
                     bounds: bounds
