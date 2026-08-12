@@ -1,4 +1,5 @@
 import buscarServicos from "../services/apiCache.js";
+import { SVG_ICONS } from "../icons.js";
 
 const CAPITAIS_BR_8 = [
     { id: "sp", nome: "São Paulo", estado: "SP", lat: -23.5505, lon: -46.6333 },
@@ -11,20 +12,18 @@ const CAPITAIS_BR_8 = [
     { id: "rs", nome: "Porto Alegre", estado: "RS", lat: -30.0346, lon: -51.2177 }
 ];
 
-function obterIconeClima(codigo) {
-    if (codigo === 0) return "☀️";
-    if ([1, 2, 3].includes(codigo)) return "⛅";
-    if ([45, 48].includes(codigo)) return "🌫️";
-    if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(codigo)) return "🌧️";
-    if ([95, 96, 99].includes(codigo)) return "🌩️";
-    return "☁️";
+function obterIconeClimaSvg(codigo) {
+    if (codigo === 0) return SVG_ICONS.weatherSun;
+    if ([1, 2, 3].includes(codigo)) return SVG_ICONS.weatherCloudSun;
+    if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(codigo)) return SVG_ICONS.weatherRain;
+    return SVG_ICONS.weatherCloudSun;
 }
 
 async function capitais(app) {
     app.innerHTML = `
         <div class="capitais-container">
             <div class="capitais-header">
-                <h1 class="capitais-title">🇧🇷 Clima nas Capitais do Brasil</h1>
+                <h1 class="capitais-title">${SVG_ICONS.capitals} Clima nas Capitais do Brasil</h1>
                 <p class="capitais-subtitle">Monitoramento meteorológico em tempo real nas 8 principais metrópoles nacionais.</p>
             </div>
 
@@ -36,14 +35,14 @@ async function capitais(app) {
                                 <h3 class="capital-card__name">${c.nome}</h3>
                                 <span class="capital-card__state">${c.estado} • Brasil</span>
                             </div>
-                            <span class="capital-card__icon" id="icon-cap-${c.id}">⏳</span>
+                            <span class="capital-card__icon" id="icon-cap-${c.id}">${SVG_ICONS.weatherCloudSun}</span>
                         </div>
 
                         <div class="capital-card__bottom">
                             <div class="capital-card__temp" id="temp-cap-${c.id}">--°C</div>
                             <button class="capital-card__btn-toggle" data-id="${c.id}" id="btn-toggle-cap-${c.id}">
                                 <span>Ver detalhes</span>
-                                <span>▾</span>
+                                ${SVG_ICONS.chevronDown}
                             </button>
                         </div>
 
@@ -77,10 +76,7 @@ async function capitais(app) {
         </div>
     `;
 
-    // Carrega dados climáticos em paralelo
     CAPITAIS_BR_8.forEach(capital => carregarClimaCapital(capital));
-
-    // Event listener para expansão dos accordions
     initAccordionEvents();
 }
 
@@ -101,7 +97,7 @@ async function carregarClimaCapital(capital) {
         const atual = climaData?.current_weather || { temperature: 20, windspeed: 10, weathercode: 0 };
         const temp = Math.round(atual.temperature);
         const vento = Math.round(atual.windspeed);
-        const icone = obterIconeClima(atual.weathercode);
+        const iconeSvg = obterIconeClimaSvg(atual.weathercode);
         const umidade = climaData?.hourly?.relative_humidity_2m?.[0] ?? 55;
 
         const elemTemp = document.getElementById(`temp-cap-${capital.id}`);
@@ -111,7 +107,7 @@ async function carregarClimaCapital(capital) {
         const elemUmidade = document.getElementById(`umidade-cap-${capital.id}`);
 
         if (elemTemp) elemTemp.textContent = `${temp}°C`;
-        if (elemIcon) elemIcon.textContent = icone;
+        if (elemIcon) elemIcon.innerHTML = iconeSvg;
         if (elemSensacao) elemSensacao.textContent = `${temp - 1}°C`;
         if (elemVento) elemVento.textContent = `${vento} km/h`;
         if (elemUmidade) elemUmidade.textContent = `${umidade}%`;
@@ -133,10 +129,10 @@ function initAccordionEvents() {
                 
                 if (isOpen) {
                     accordion.classList.remove('capital-card__accordion--open');
-                    btn.innerHTML = `<span>Ver detalhes</span> <span>▾</span>`;
+                    btn.innerHTML = `<span>Ver detalhes</span> ${SVG_ICONS.chevronDown}`;
                 } else {
                     accordion.classList.add('capital-card__accordion--open');
-                    btn.innerHTML = `<span>Recolher</span> <span>▴</span>`;
+                    btn.innerHTML = `<span>Recolher</span> ${SVG_ICONS.chevronUp}`;
                 }
             }
         });
@@ -146,6 +142,6 @@ function initAccordionEvents() {
 export default {
     url: "#capitais",
     label: "Capitais",
-    icone: "🇧🇷",
+    icone: SVG_ICONS.capitals,
     pagina: capitais
 };

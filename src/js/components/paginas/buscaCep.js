@@ -1,10 +1,11 @@
 import buscarServicos from "../services/apiCache.js";
+import { SVG_ICONS } from "../icons.js";
 
 async function buscaCep(app) {
     app.innerHTML = `
         <div class="cep-container">
             <div class="cep-card">
-                <h1 class="cep-title">📍 Consulta de Clima por CEP</h1>
+                <h1 class="cep-title">${SVG_ICONS.location} Consulta de Clima por CEP</h1>
                 <p class="cep-subtitle">Digite seu CEP brasileiro para localizar o endereço e obter a previsão meteorológica em tempo real da sua região.</p>
 
                 <form id="form-busca-cep" class="cep-form">
@@ -19,7 +20,7 @@ async function buscaCep(app) {
                         />
                     </div>
                     <button type="submit" class="cep-btn">
-                        <span>🔍</span>
+                        <span>${SVG_ICONS.search}</span>
                         <span>Buscar Clima</span>
                     </button>
                 </form>
@@ -32,7 +33,6 @@ async function buscaCep(app) {
     const formCep = document.getElementById("form-busca-cep");
     const inputCep = document.getElementById("input-cep");
 
-    // Máscara automática de CEP (00000-000)
     if (inputCep) {
         inputCep.addEventListener("input", (e) => {
             let value = e.target.value.replace(/\D/g, "");
@@ -42,7 +42,6 @@ async function buscaCep(app) {
             e.target.value = value;
         });
 
-        // Trigger automático de busca ao perder o foco (blur) conforme especificação
         inputCep.addEventListener("blur", async (e) => {
             const rawCep = e.target.value.replace(/\D/g, "");
             if (rawCep.length === 8) {
@@ -70,26 +69,24 @@ async function processarBuscaCep(cepLimpo) {
     if (!containerResultado) return;
 
     containerResultado.innerHTML = `
-        <div style="text-align: center; padding: 1.5rem; color: var(--accent-blue);">
-            <h3>⏳ Consultando ViaCEP e dados meteorológicos...</h3>
+        <div style="text-align: center; padding: 1.5rem; color: var(--text-primary);">
+            <h3>Consultando ViaCEP e dados meteorológicos...</h3>
         </div>
     `;
 
     try {
-        // 1. Busca no ViaCEP via apiCache
         const viaCepUrl = `https://viacep.com.br/ws/${cepLimpo}/json/`;
         const dadosEndereco = await buscarServicos(viaCepUrl, {}, `viacep-${cepLimpo}`);
 
         if (!dadosEndereco || dadosEndereco.erro) {
             containerResultado.innerHTML = `
                 <div style="padding: 1rem; background-color: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; border-radius: 8px; color: #ef4444;">
-                    ❌ CEP não encontrado. Verifique o número digitado.
+                    CEP não encontrado. Verifique o número digitado.
                 </div>
             `;
             return;
         }
 
-        // 2. Converte Cidade/UF em Lat/Long via Geocoding
         const termoBusca = `${dadosEndereco.localidade}, ${dadosEndereco.uf}, Brasil`;
         const geoData = await buscarServicos(
             "https://geocoding-api.open-meteo.com/v1/search",
@@ -104,7 +101,6 @@ async function processarBuscaCep(cepLimpo) {
             lon = geoData.results[0].longitude;
         }
 
-        // 3. Busca Previsão do Clima no Open-Meteo via apiCache
         const climaData = await buscarServicos(
             "https://api.open-meteo.com/v1/forecast",
             {
@@ -121,11 +117,10 @@ async function processarBuscaCep(cepLimpo) {
         const tempAtual = Math.round(atual.temperature);
         const vento = Math.round(atual.windspeed);
 
-        // Renderiza resultado detalhado de Endereço + Clima
         containerResultado.innerHTML = `
             <div style="border-top: 1px solid var(--border-color); padding-top: 1.5rem; margin-top: 1rem;">
-                <h3 style="font-family: var(--font-heading); margin-bottom: 1rem; color: var(--accent-blue);">
-                    🏠 Endereço Localizado
+                <h3 style="font-family: var(--font-heading); margin-bottom: 1rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+                    ${SVG_ICONS.location} Endereço Localizado
                 </h3>
 
                 <div class="address-info-grid">
@@ -147,8 +142,8 @@ async function processarBuscaCep(cepLimpo) {
                     </div>
                 </div>
 
-                <h3 style="font-family: var(--font-heading); margin-bottom: 1rem; color: var(--accent-cyan);">
-                    🌤️ Clima Atual no CEP
+                <h3 style="font-family: var(--font-heading); margin-bottom: 1rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem;">
+                    ${SVG_ICONS.weatherCloudSun} Clima Atual no CEP
                 </h3>
 
                 <div class="weekly-card weekly-card--hero" style="width: 100%; border-radius: var(--radius-lg);">
@@ -157,7 +152,7 @@ async function processarBuscaCep(cepLimpo) {
                             <div class="weekly-card__day">${dadosEndereco.localidade}, ${dadosEndereco.uf}</div>
                             <div style="font-size: 0.85rem; color: var(--text-secondary);">${dadosEndereco.bairro || 'Região central'}</div>
                         </div>
-                        <div style="font-size: 2.8rem;">🌤️</div>
+                        <div style="font-size: 2rem;">${SVG_ICONS.weatherCloudSun}</div>
                     </div>
                     <div class="hero-card__temp-big" style="font-family: var(--font-number); font-size: 4.2rem;">${tempAtual}°C</div>
                     
@@ -173,7 +168,7 @@ async function processarBuscaCep(cepLimpo) {
         console.error("Erro na busca por CEP:", err);
         containerResultado.innerHTML = `
             <div style="padding: 1rem; background-color: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; border-radius: 8px; color: #ef4444;">
-                ❌ Erro ao consultar CEP ou serviço de clima. Tente novamente.
+                Erro ao consultar CEP ou serviço de clima. Tente novamente.
             </div>
         `;
     }
@@ -182,6 +177,6 @@ async function processarBuscaCep(cepLimpo) {
 export default {
     url: "#busca-cep",
     label: "Busca por CEP",
-    icone: "📍",
+    icone: SVG_ICONS.location,
     pagina: buscaCep
 };

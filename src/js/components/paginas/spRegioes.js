@@ -1,4 +1,5 @@
 import buscarServicos from "../services/apiCache.js";
+import { SVG_ICONS } from "../icons.js";
 
 const REGIOES_SP = [
     { id: "capital", nome: "Capital / Grande SP", cidade: "São Paulo", lat: -23.5505, lon: -46.6333 },
@@ -11,20 +12,18 @@ const REGIOES_SP = [
     { id: "bauru", nome: "Região de Bauru", cidade: "Bauru", lat: -22.3145, lon: -49.0587 }
 ];
 
-function obterIconeClima(codigo) {
-    if (codigo === 0) return "☀️";
-    if ([1, 2, 3].includes(codigo)) return "⛅";
-    if ([45, 48].includes(codigo)) return "🌫️";
-    if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(codigo)) return "🌧️";
-    if ([95, 96, 99].includes(codigo)) return "🌩️";
-    return "☁️";
+function obterIconeClimaSvg(codigo) {
+    if (codigo === 0) return SVG_ICONS.weatherSun;
+    if ([1, 2, 3].includes(codigo)) return SVG_ICONS.weatherCloudSun;
+    if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(codigo)) return SVG_ICONS.weatherRain;
+    return SVG_ICONS.weatherCloudSun;
 }
 
 async function spRegioes(app) {
     app.innerHTML = `
         <div class="regioes-container">
             <div class="regioes-header">
-                <h1 class="regioes-title">🗺️ Clima nas Regiões de São Paulo</h1>
+                <h1 class="regioes-title">${SVG_ICONS.map} Clima nas Regiões de São Paulo</h1>
                 <p class="regioes-subtitle">Monitoramento em tempo real das 8 principais macrorregiões e polos econômicos do Estado de SP.</p>
             </div>
 
@@ -36,14 +35,14 @@ async function spRegioes(app) {
                                 <h3 class="regiao-card__name">${r.nome}</h3>
                                 <span class="regiao-card__state">${r.cidade} • SP</span>
                             </div>
-                            <span class="regiao-card__icon" id="icon-${r.id}">⏳</span>
+                            <span class="regiao-card__icon" id="icon-${r.id}">${SVG_ICONS.weatherCloudSun}</span>
                         </div>
 
                         <div class="regiao-card__bottom">
                             <div class="regiao-card__temp" id="temp-${r.id}">--°C</div>
                             <button class="regiao-card__btn-toggle" data-id="${r.id}" id="btn-toggle-${r.id}">
                                 <span>Ver detalhes</span>
-                                <span>▾</span>
+                                ${SVG_ICONS.chevronDown}
                             </button>
                         </div>
 
@@ -68,7 +67,7 @@ async function spRegioes(app) {
                                 </div>
                             </div>
                             <div style="margin-top: 0.75rem; text-align: right;">
-                                <a href="#inicio?cidade=${encodeURIComponent(r.cidade)}" style="font-size: 0.775rem; color: var(--accent-blue); text-decoration: underline; font-weight: 600;">Abrir no Dashboard →</a>
+                                <a href="#inicio?cidade=${encodeURIComponent(r.cidade)}" style="font-size: 0.775rem; color: var(--text-primary); text-decoration: underline; font-weight: 600;">Abrir no Dashboard →</a>
                             </div>
                         </div>
                     </div>
@@ -77,10 +76,7 @@ async function spRegioes(app) {
         </div>
     `;
 
-    // Carrega dados climáticos em paralelo para cada região
     REGIOES_SP.forEach(regiao => carregarClimaRegiao(regiao));
-
-    // Event listener para expansão dos accordions
     initAccordionEvents();
 }
 
@@ -101,7 +97,7 @@ async function carregarClimaRegiao(regiao) {
         const atual = climaData?.current_weather || { temperature: 20, windspeed: 10, weathercode: 0 };
         const temp = Math.round(atual.temperature);
         const vento = Math.round(atual.windspeed);
-        const icone = obterIconeClima(atual.weathercode);
+        const iconeSvg = obterIconeClimaSvg(atual.weathercode);
         const umidade = climaData?.hourly?.relative_humidity_2m?.[0] ?? 55;
 
         const elemTemp = document.getElementById(`temp-${regiao.id}`);
@@ -111,7 +107,7 @@ async function carregarClimaRegiao(regiao) {
         const elemUmidade = document.getElementById(`umidade-${regiao.id}`);
 
         if (elemTemp) elemTemp.textContent = `${temp}°C`;
-        if (elemIcon) elemIcon.textContent = icone;
+        if (elemIcon) elemIcon.innerHTML = iconeSvg;
         if (elemSensacao) elemSensacao.textContent = `${temp - 1}°C`;
         if (elemVento) elemVento.textContent = `${vento} km/h`;
         if (elemUmidade) elemUmidade.textContent = `${umidade}%`;
@@ -133,10 +129,10 @@ function initAccordionEvents() {
                 
                 if (isOpen) {
                     accordion.classList.remove('regiao-card__accordion--open');
-                    btn.innerHTML = `<span>Ver detalhes</span> <span>▾</span>`;
+                    btn.innerHTML = `<span>Ver detalhes</span> ${SVG_ICONS.chevronDown}`;
                 } else {
                     accordion.classList.add('regiao-card__accordion--open');
-                    btn.innerHTML = `<span>Recolher</span> <span>▴</span>`;
+                    btn.innerHTML = `<span>Recolher</span> ${SVG_ICONS.chevronUp}`;
                 }
             }
         });
@@ -146,6 +142,6 @@ function initAccordionEvents() {
 export default {
     url: "#sp-regioes",
     label: "Regiões de SP",
-    icone: "🗺️",
+    icone: SVG_ICONS.map,
     pagina: spRegioes
 };
