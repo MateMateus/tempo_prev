@@ -1,5 +1,7 @@
 import buscarServicos from "../services/apiCache.js";
 import { SVG_ICONS } from "../icons.js";
+import { obterIconeClimaSvg } from "../../utils/weatherUtils.js";
+import { initAccordionEvents } from "../../utils/accordion.js";
 
 const REGIOES_SP = [
     { id: "capital", nome: "Capital / Grande SP", cidade: "São Paulo", lat: -23.5505, lon: -46.6333 },
@@ -11,13 +13,6 @@ const REGIOES_SP = [
     { id: "riopreto", nome: "S. J. do Rio Preto", cidade: "São José do Rio Preto", lat: -20.8197, lon: -49.3794 },
     { id: "bauru", nome: "Região de Bauru", cidade: "Bauru", lat: -22.3145, lon: -49.0587 }
 ];
-
-function obterIconeClimaSvg(codigo) {
-    if (codigo === 0) return SVG_ICONS.weatherSun;
-    if ([1, 2, 3].includes(codigo)) return SVG_ICONS.weatherCloudSun;
-    if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(codigo)) return SVG_ICONS.weatherRain;
-    return SVG_ICONS.weatherCloudSun;
-}
 
 async function spRegioes(app) {
     const regioesComClima = await Promise.all(REGIOES_SP.map(async (r) => {
@@ -117,28 +112,7 @@ async function spRegioes(app) {
         </div>
     `;
 
-    initAccordionEvents();
-}
-
-function initAccordionEvents() {
-    document.querySelectorAll('.regiao-card__btn-toggle').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const regiaoId = btn.getAttribute('data-id');
-            const accordion = document.getElementById(`accordion-${regiaoId}`);
-            
-            if (accordion) {
-                const isOpen = accordion.classList.contains('regiao-card__accordion--open');
-                
-                if (isOpen) {
-                    accordion.classList.remove('regiao-card__accordion--open');
-                    btn.innerHTML = `<span>Ver detalhes</span> ${SVG_ICONS.chevronDown}`;
-                } else {
-                    accordion.classList.add('regiao-card__accordion--open');
-                    btn.innerHTML = `<span>Recolher</span> ${SVG_ICONS.chevronUp}`;
-                }
-            }
-        });
-    });
+    initAccordionEvents('.regiao-card__btn-toggle', 'accordion-', 'regiao-card__accordion--open');
 }
 
 export default {

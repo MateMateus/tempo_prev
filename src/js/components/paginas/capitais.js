@@ -1,5 +1,7 @@
 import buscarServicos from "../services/apiCache.js";
 import { SVG_ICONS } from "../icons.js";
+import { obterIconeClimaSvg } from "../../utils/weatherUtils.js";
+import { initAccordionEvents } from "../../utils/accordion.js";
 
 const CAPITAIS_BR_8 = [
     { id: "sp", nome: "São Paulo", estado: "SP", lat: -23.5505, lon: -46.6333 },
@@ -11,13 +13,6 @@ const CAPITAIS_BR_8 = [
     { id: "pe", nome: "Recife", estado: "PE", lat: -8.0476, lon: -34.8770 },
     { id: "rs", nome: "Porto Alegre", estado: "RS", lat: -30.0346, lon: -51.2177 }
 ];
-
-function obterIconeClimaSvg(codigo) {
-    if (codigo === 0) return SVG_ICONS.weatherSun;
-    if ([1, 2, 3].includes(codigo)) return SVG_ICONS.weatherCloudSun;
-    if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(codigo)) return SVG_ICONS.weatherRain;
-    return SVG_ICONS.weatherCloudSun;
-}
 
 async function capitais(app) {
     const capitaisComClima = await Promise.all(CAPITAIS_BR_8.map(async (c) => {
@@ -117,28 +112,7 @@ async function capitais(app) {
         </div>
     `;
 
-    initAccordionEvents();
-}
-
-function initAccordionEvents() {
-    document.querySelectorAll('.capital-card__btn-toggle').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const capitalId = btn.getAttribute('data-id');
-            const accordion = document.getElementById(`accordion-cap-${capitalId}`);
-            
-            if (accordion) {
-                const isOpen = accordion.classList.contains('capital-card__accordion--open');
-                
-                if (isOpen) {
-                    accordion.classList.remove('capital-card__accordion--open');
-                    btn.innerHTML = `<span>Ver detalhes</span> ${SVG_ICONS.chevronDown}`;
-                } else {
-                    accordion.classList.add('capital-card__accordion--open');
-                    btn.innerHTML = `<span>Recolher</span> ${SVG_ICONS.chevronUp}`;
-                }
-            }
-        });
-    });
+    initAccordionEvents('.capital-card__btn-toggle', 'accordion-cap-', 'capital-card__accordion--open');
 }
 
 export default {

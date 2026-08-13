@@ -1,22 +1,25 @@
 import buscarServicos from "../services/apiCache.js";
 import { SVG_ICONS } from "../icons.js";
+import { traduzirClimaWmo } from "../../utils/weatherUtils.js";
 
 let cepMapInstance = null;
 let cepTileLayerInstance = null;
 let cepPolygonInstance = null;
+let onThemeChangedHandler = null;
 
-function traduzirClimaWmo(codigo) {
-    if (codigo === 0) return { texto: "Ensolarado e Limpo", iconeSvg: SVG_ICONS.weatherSun };
-    if ([1, 2, 3].includes(codigo)) return { texto: "Parcialmente Nublado", iconeSvg: SVG_ICONS.weatherCloudSun };
-    if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(codigo)) return { texto: "Chuva Moderada", iconeSvg: SVG_ICONS.weatherRain };
-    return { texto: "Nublado", iconeSvg: SVG_ICONS.weatherCloudSun };
-}
-
-async function buscaCep(app) {
+function cleanupMapInstance() {
+    if (onThemeChangedHandler) {
+        window.removeEventListener('themeChanged', onThemeChangedHandler);
+        onThemeChangedHandler = null;
+    }
     if (cepMapInstance) {
         cepMapInstance.remove();
         cepMapInstance = null;
     }
+}
+
+async function buscaCep(app) {
+    cleanupMapInstance();
 
     app.innerHTML = `
         <div class="cep-container">
@@ -216,14 +219,10 @@ async function initCepMiniMap(lat, lon, bairro, cidade) {
     if (!mapContainer || typeof L === "undefined") return;
 
     const bairroNome = bairro || cidade || "Região";
-    const cidadeNome = cidade || "Brasil";
 
-    if (cepMapInstance) {
-        cepMapInstance.remove();
-        cepMapInstance = null;
-    }
+    cleanupMapInstance();
 
-    // Zoom adaptativo para resoluções mobile 320px-425px (Spec v7.0 Requirement: Zoom 13/14)
+    // Zoom adaptativo para resoluções mobile 320px-425px
     const isMobileScreen = window.innerWidth <= 425;
     const initialZoom = isMobileScreen ? 13 : 14;
 
@@ -260,7 +259,7 @@ async function initCepMiniMap(lat, lon, bairro, cidade) {
         fillOpacity: 0.15
     });
 
-    // Busca do perímetro exato por GeoJSON via API Nominatim (Spec v8.0)
+    // Busca do perímetro exato por GeoJSON via API Nominatim
     let geoJsonData = null;
     if (bairro && cidade) {
         try {
@@ -276,7 +275,7 @@ async function initCepMiniMap(lat, lon, bairro, cidade) {
                 }
             }
         } catch (e) {
-            // Fallback silencioso para contorno padrão em caso de indisponibilidade
+            // Fallback silencioso para contorno padrão
         }
     }
 
@@ -289,7 +288,6 @@ async function initCepMiniMap(lat, lon, bairro, cidade) {
             cepMapInstance.fitBounds(cepPolygonInstance.getBounds(), { padding: [20, 20] });
         }
     } else {
-        // Fallback de retângulo rígido caso Nominatim não traga o polígono
         const boundsRectangle = [
             [lat - 0.008, lon - 0.012],
             [lat + 0.008, lon + 0.012]
@@ -306,7 +304,7 @@ async function initCepMiniMap(lat, lon, bairro, cidade) {
 
     L.marker([lat, lon], { icon: customIcon }).addTo(cepMapInstance);
 
-    window.addEventListener('themeChanged', (e) => {
+    onThemeChangedHandler = (e) => {
         if (cepMapInstance && cepTileLayerInstance) {
             const newTheme = e.detail.theme;
             cepMapInstance.removeLayer(cepTileLayerInstance);
@@ -319,7 +317,9 @@ async function initCepMiniMap(lat, lon, bairro, cidade) {
                 cepPolygonInstance.setStyle(getPolygonStyle(newTheme));
             }
         }
-    });
+    };
+
+    window.addEventListener('themeChanged', onThemeChangedHandler);
 }
 
 export default {

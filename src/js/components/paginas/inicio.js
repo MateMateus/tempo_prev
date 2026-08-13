@@ -1,5 +1,7 @@
 import buscarServicos from "../services/apiCache.js";
 import { SVG_ICONS } from "../icons.js";
+import { traduzirClimaWmo, obterDiaSemana } from "../../utils/weatherUtils.js";
+import { initGlobalVectorMap } from "../inicio/mapaGlobal.js";
 
 const CAPITAIS_BRASILEIRAS = [
     { nome: "São Paulo", estado: "SP", lat: -23.5505, lon: -46.6333 },
@@ -7,36 +9,6 @@ const CAPITAIS_BRASILEIRAS = [
     { nome: "Brasília", estado: "DF", lat: -15.7801, lon: -47.9292 },
     { nome: "Salvador", estado: "BA", lat: -12.9714, lon: -38.5014 }
 ];
-
-const CAPITAIS_GLOBAIS = [
-    { nome: "Brasília", pais: "BR", lat: -15.7801, lon: -47.9292, temp: "25°", iconeSvg: SVG_ICONS.weatherSun },
-    { nome: "Washington D.C.", pais: "US", lat: 38.9072, lon: -77.0369, temp: "22°", iconeSvg: SVG_ICONS.weatherCloudSun },
-    { nome: "Londres", pais: "UK", lat: 51.5074, lon: -0.1278, temp: "16°", iconeSvg: SVG_ICONS.weatherRain },
-    { nome: "Tóquio", pais: "JP", lat: 35.6762, lon: 139.6503, temp: "26°", iconeSvg: SVG_ICONS.weatherSun },
-    { nome: "Cairo", pais: "EG", lat: 30.0444, lon: 31.2357, temp: "34°", iconeSvg: SVG_ICONS.weatherSun },
-    { nome: "Sydney", pais: "AU", lat: -33.8688, lon: 151.2093, temp: "19°", iconeSvg: SVG_ICONS.weatherCloudSun }
-];
-
-function traduzirClimaWmo(codigo) {
-    if (codigo === 0) return { texto: "Ensolarado e Limpo", iconeSvg: SVG_ICONS.weatherSun, frase: "Dia ensolarado com céu limpo." };
-    if ([1, 2, 3].includes(codigo)) return { texto: "Parcialmente Nublado", iconeSvg: SVG_ICONS.weatherCloudSun, frase: "Sol com algumas nuvens." };
-    if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(codigo)) return { texto: "Chuva Moderada", iconeSvg: SVG_ICONS.weatherRain, frase: "Expectativa de chuva durante o dia." };
-    return { texto: "Nublado", iconeSvg: SVG_ICONS.weatherCloudSun, frase: "Céu encoberto por nuvens." };
-}
-
-function obterDiaSemana(dataIso, indice) {
-    if (indice === 0) return "Hoje";
-    if (indice === 1) return "Amanhã";
-    const dias = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-    const d = new Date(dataIso + "T00:00:00");
-    return dias[d.getDay()];
-}
-
-let mapInstance = null;
-let tileLayerInstance = null;
-let tempTileLayer = typeof L !== "undefined" ? L.tileLayer('https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=c8d45df9e0d1d6447d6d53ef69eb6861', { opacity: 0.65, zIndex: 100 }) : null;
-let rainTileLayer = typeof L !== "undefined" ? L.tileLayer('https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=c8d45df9e0d1d6447d6d53ef69eb6861', { opacity: 0.65, zIndex: 100 }) : null;
-
 
 async function inicio(app, queryParams = {}) {
     let cidadeNome = queryParams.cidade || "São Paulo, Brasil";
@@ -321,7 +293,6 @@ function renderForecastGrid(focusedIdx, climaData, cidadeNome, horarioAtualStr) 
     return html;
 }
 
-// Gerenciador de Eventos do Grid (Troca por CLIQUE obrigatória no Tablet/Mobile, Hover opcional apenas em Desktop 1025px+)
 function initGridEvents(climaData, cidadeNome, horarioAtualStr) {
     const gridContainer = document.getElementById("forecast-grid-container");
     const tabBtns = document.querySelectorAll(".dashboard-tabs__btn");
@@ -353,12 +324,10 @@ function initGridEvents(climaData, cidadeNome, horarioAtualStr) {
             if (idxStr === null) return;
             const idx = parseInt(idxStr, 10);
 
-            // Clique é SEMPRE ativado em qualquer resolução (Spec v7.0 Requirement)
             card.addEventListener("click", () => {
                 updateGrid(idx);
             });
 
-            // Hover ativado EXCLUSIVAMENTE em telas desktop grandes (> 1024px) (Spec v7.0: Eliminar hover no tablet)
             if (window.innerWidth > 1024) {
                 card.addEventListener("mouseenter", () => {
                     updateGrid(idx);
@@ -377,138 +346,6 @@ function initGridEvents(climaData, cidadeNome, horarioAtualStr) {
     });
 
     bindCardListeners();
-}
-
-// Inicialização do Mapa Leaflet sem Rótulos CJK e com Camadas Reais (Térmica + Chuva)
-function initGlobalVectorMap() {
-    const mapContainer = document.getElementById("mapa-brasil-leaf");
-    if (!mapContainer || typeof L === "undefined") return;
-
-    if (mapInstance) {
-        mapInstance.remove();
-        mapInstance = null;
-    }
-
-    const bounds = [[-85, -180], [85, 180]];
-
-    mapInstance = L.map("mapa-brasil-leaf", {
-        center: [20, 0],
-        zoom: 2,
-        maxBounds: bounds,
-        maxBoundsViscosity: 1.0,
-        worldCopyJump: false,
-        dragging: true,
-        touchZoom: true,
-        doubleClickZoom: true,
-        scrollWheelZoom: false,
-        zoomControl: true
-    });
-
-    mapInstance.zoomControl.setPosition('topright');
-
-    const getTileUrl = (theme) => {
-        return theme === 'light'
-            ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png'
-            : 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}/{y}{r}.png';
-    };
-
-    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-    tileLayerInstance = L.tileLayer(getTileUrl(currentTheme), {
-        attribution: '&copy; CartoDB & OpenStreetMap',
-        maxZoom: 8,
-        minZoom: 2,
-        noWrap: true,
-        bounds: bounds
-    }).addTo(mapInstance);
-
-    window.addEventListener('themeChanged', (e) => {
-        if (mapInstance && tileLayerInstance) {
-            mapInstance.removeLayer(tileLayerInstance);
-            tileLayerInstance = L.tileLayer(getTileUrl(e.detail.theme), {
-                attribution: '&copy; CartoDB & OpenStreetMap',
-                maxZoom: 8,
-                minZoom: 2,
-                noWrap: true,
-                bounds: bounds
-            }).addTo(mapInstance);
-        }
-    });
-
-    if (!tempTileLayer && typeof L !== "undefined") {
-        tempTileLayer = L.tileLayer('https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=c8d45df9e0d1d6447d6d53ef69eb6861', {
-            opacity: 0.65,
-            zIndex: 100,
-            maxZoom: 8,
-            noWrap: true,
-            bounds: bounds
-        });
-    }
-
-    if (!rainTileLayer && typeof L !== "undefined") {
-        rainTileLayer = L.tileLayer('https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=c8d45df9e0d1d6447d6d53ef69eb6861', {
-            opacity: 0.65,
-            zIndex: 100,
-            maxZoom: 8,
-            noWrap: true,
-            bounds: bounds
-        });
-    }
-
-    const zoomContainer = mapInstance.zoomControl.getContainer();
-    if (zoomContainer) {
-        // 1. Botão Térmico Real (Foguinho) - OpenWeatherMap Temperatura Layer
-        const thermalBtn = document.createElement('button');
-        thermalBtn.className = 'map-btn-control-circular' + (tempTileLayer && mapInstance.hasLayer(tempTileLayer) ? ' map-btn-control-circular--active' : '');
-        thermalBtn.title = 'Alternar Gradiente Térmico de Temperatura';
-        thermalBtn.innerHTML = SVG_ICONS.flame;
-
-        thermalBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (!mapInstance || !tempTileLayer) return;
-
-            if (mapInstance.hasLayer(tempTileLayer)) {
-                mapInstance.removeLayer(tempTileLayer);
-                thermalBtn.classList.remove('map-btn-control-circular--active');
-            } else {
-                mapInstance.addLayer(tempTileLayer);
-                thermalBtn.classList.add('map-btn-control-circular--active');
-            }
-        });
-
-        // 2. Botão de Radar de Precipitação Real (Chuva) - OpenWeatherMap Chuva Layer
-        const rainBtn = document.createElement('button');
-        rainBtn.className = 'map-btn-control-circular' + (rainTileLayer && mapInstance.hasLayer(rainTileLayer) ? ' map-btn-control-circular--active' : '');
-        rainBtn.title = 'Alternar Radar de Precipitação de Chuva';
-        rainBtn.innerHTML = SVG_ICONS.rain;
-
-        rainBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (!mapInstance || !rainTileLayer) return;
-
-            if (mapInstance.hasLayer(rainTileLayer)) {
-                mapInstance.removeLayer(rainTileLayer);
-                rainBtn.classList.remove('map-btn-control-circular--active');
-            } else {
-                mapInstance.addLayer(rainTileLayer);
-                rainBtn.classList.add('map-btn-control-circular--active');
-            }
-        });
-
-        zoomContainer.appendChild(thermalBtn);
-        zoomContainer.appendChild(rainBtn);
-    }
-
-    // 6 Capitais Globais
-    CAPITAIS_GLOBAIS.forEach(m => {
-        const customIcon = L.divIcon({
-            className: 'leaflet-map-badge',
-            html: `<span>${m.nome} ${m.temp}</span>`,
-            iconSize: [110, 26],
-            iconAnchor: [55, 13]
-        });
-
-        L.marker([m.lat, m.lon], { icon: customIcon }).addTo(mapInstance);
-    });
 }
 
 export default {
