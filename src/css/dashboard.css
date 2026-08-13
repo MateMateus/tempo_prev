@@ -123,6 +123,24 @@
     align-items: center;
 }
 
+/* Weather Card Icons Scaling (Spec v8.0 Requirement) */
+.weather-icon,
+.card-weather-symbol svg,
+.weekly-card__icon svg,
+.city-item__icon svg {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    flex-shrink: 0;
+}
+
+.hero-card__icon-big svg {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    flex-shrink: 0;
+}
+
 .weekly-card__temp {
     font-family: var(--font-number);
     font-size: 1.5rem;
@@ -682,5 +700,15 @@
         font-family: var(--font-number);
         font-size: 1.15rem;
         font-weight: 700;
+    }
+}
+
+@media (max-width: 480px) {
+    .mobile-hero-icon svg,
+    .hero-card__icon-big svg {
+        min-width: 40px;
+        min-height: 40px;
+        width: 40px;
+        height: 40px;
     }
 }

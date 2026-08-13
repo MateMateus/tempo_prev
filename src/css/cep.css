@@ -26,6 +26,14 @@
     color: var(--text-primary);
 }
 
+.cep-title svg,
+.cep-btn svg {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    flex-shrink: 0;
+}
+
 .cep-subtitle {
     font-size: 0.9rem;
     color: var(--text-secondary);
