@@ -246,7 +246,7 @@ function renderForecastGrid(focusedIdx, climaData, cidadeNome, horarioAtualStr) 
 
         if (i === focusedIdx) {
             html += `
-                <div class="weekly-card weekly-card--hero" data-day-index="${i}">
+                <div class="weekly-card weekly-card--hero weekly-card--expanded weather-hero-card" data-day-index="${i}">
                     <div style="display: flex; justify-content: space-between; width: 100%;">
                         <div>
                             <div class="weekly-card__day">${diaSemana} • ${horarioAtualStr}</div>

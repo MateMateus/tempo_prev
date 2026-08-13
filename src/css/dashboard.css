@@ -712,3 +712,22 @@
         height: 40px;
     }
 }
+
+/* Desktop High-Res Hero Card Height Stabilization (1440px to 2560px) */
+@media (min-width: 1440px) {
+    .weather-hero-card,
+    .weekly-card--expanded,
+    .weekly-card--hero {
+        min-height: 290px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .hero-card__metrics-vertical,
+    .hero-card__metric-item {
+        line-height: 1.4;
+    }
+}
+
