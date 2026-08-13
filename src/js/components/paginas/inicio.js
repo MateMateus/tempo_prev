@@ -238,12 +238,12 @@ function renderForecastGrid(focusedIdx, climaData, cidadeNome, horarioAtualStr) 
         if (i === focusedIdx) {
             html += `
                 <div class="weekly-card weekly-card--hero weekly-card--expanded weather-hero-card" data-day-index="${i}">
-                    <div style="display: flex; justify-content: space-between; width: 100%;">
-                        <div>
-                            <div class="weekly-card__day">${diaSemana} • ${horarioAtualStr}</div>
-                            <div style="font-size: 0.8rem; color: var(--text-muted);">${cidadeNome}</div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%; gap: 6px;">
+                        <div style="min-width: 0;">
+                            <div class="weekly-card__day" style="white-space: nowrap;">${diaSemana} • ${horarioAtualStr}</div>
+                            <div style="font-size: 0.775rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px;">${cidadeNome}</div>
                         </div>
-                        <div style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600;">${info.texto}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 600; text-align: right; white-space: nowrap; flex-shrink: 0;">${info.texto}</div>
                     </div>
                     
                     <div class="hero-card__temp-row">
