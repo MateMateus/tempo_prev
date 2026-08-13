@@ -193,7 +193,7 @@ async function processarBuscaCep(cepLimpo) {
             </div>
         `;
 
-        initCepMiniMap(lat, lon, `${dadosEndereco.bairro || dadosEndereco.localidade}`);
+        await initCepMiniMap(lat, lon, dadosEndereco.bairro, dadosEndereco.localidade);
 
     } catch (err) {
         console.error("Erro na busca por CEP:", err);
@@ -205,10 +205,13 @@ async function processarBuscaCep(cepLimpo) {
     }
 }
 
-// Inicializa o Mini-Mapa Leaflet do Bairro com Polígono Tracejado (dashArray: '6, 6') e Zoom Adaptativo Mobile (Spec v7.0)
-function initCepMiniMap(lat, lon, bairroNome) {
+// Inicializa o Mini-Mapa Leaflet do Bairro com Demarcação Vetorial GeoJSON (Nominatim) e Contorno Tracejado (dashArray: '6, 6')
+async function initCepMiniMap(lat, lon, bairro, cidade) {
     const mapContainer = document.getElementById("cep-map");
     if (!mapContainer || typeof L === "undefined") return;
+
+    const bairroNome = bairro || cidade || "Região";
+    const cidadeNome = cidade || "Brasil";
 
     if (cepMapInstance) {
         cepMapInstance.remove();
@@ -240,21 +243,50 @@ function initCepMiniMap(lat, lon, bairroNome) {
         maxZoom: 18
     }).addTo(cepMapInstance);
 
-    // Polígono Vetorial Tracejado (dashArray: '6, 6') (Spec v7.0 Requirement)
-    const boundsRectangle = [
-        [lat - 0.008, lon - 0.012],
-        [lat + 0.008, lon + 0.012]
-    ];
-
     const getPolygonStyle = (theme) => ({
         color: theme === 'light' ? '#121316' : '#FFFFFF',
         weight: 2,
         dashArray: '6, 6', // Contorno tracejado 6,6
         fillColor: theme === 'light' ? '#121316' : '#FFFFFF',
-        fillOpacity: 0.1
+        fillOpacity: 0.15
     });
 
-    cepPolygonInstance = L.rectangle(boundsRectangle, getPolygonStyle(currentTheme)).addTo(cepMapInstance);
+    // Busca do perímetro exato por GeoJSON via API Nominatim (Spec v8.0)
+    let geoJsonData = null;
+    if (bairro && cidade) {
+        try {
+            const queryUrl = 'https://nominatim.openstreetmap.org/search?format=json&polygon_geojson=1&q=' + encodeURIComponent(`${bairro}, ${cidade}, Brasil`);
+            const res = await fetch(queryUrl);
+            if (res.ok) {
+                const data = await res.json();
+                if (data && data.length > 0) {
+                    const itemComGeoJson = data.find(i => i.geojson && (i.geojson.type === "Polygon" || i.geojson.type === "MultiPolygon")) || data[0];
+                    if (itemComGeoJson && itemComGeoJson.geojson) {
+                        geoJsonData = itemComGeoJson.geojson;
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn("Consulta Nominatim GeoJSON não disponível, aplicando fallback:", e);
+        }
+    }
+
+    if (geoJsonData) {
+        cepPolygonInstance = L.geoJSON(geoJsonData, {
+            style: getPolygonStyle(currentTheme)
+        }).addTo(cepMapInstance);
+
+        if (cepPolygonInstance.getBounds && cepPolygonInstance.getBounds().isValid()) {
+            cepMapInstance.fitBounds(cepPolygonInstance.getBounds(), { padding: [20, 20] });
+        }
+    } else {
+        // Fallback de retângulo rígido caso Nominatim não traga o polígono
+        const boundsRectangle = [
+            [lat - 0.008, lon - 0.012],
+            [lat + 0.008, lon + 0.012]
+        ];
+        cepPolygonInstance = L.rectangle(boundsRectangle, getPolygonStyle(currentTheme)).addTo(cepMapInstance);
+    }
 
     const customIcon = L.divIcon({
         className: 'leaflet-map-badge',
@@ -274,7 +306,7 @@ function initCepMiniMap(lat, lon, bairroNome) {
                 maxZoom: 18
             }).addTo(cepMapInstance);
 
-            if (cepPolygonInstance) {
+            if (cepPolygonInstance && typeof cepPolygonInstance.setStyle === 'function') {
                 cepPolygonInstance.setStyle(getPolygonStyle(newTheme));
             }
         }
