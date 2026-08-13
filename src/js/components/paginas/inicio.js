@@ -34,10 +34,8 @@ function obterDiaSemana(dataIso, indice) {
 
 let mapInstance = null;
 let tileLayerInstance = null;
-let heatmapLayerInstance = null;
-let rainLayerInstance = null;
-let isHeatmapActive = false;
-let isRainActive = false;
+let tempLayer = null;
+let rainLayer = null;
 
 async function inicio(app, queryParams = {}) {
     let cidadeNome = queryParams.cidade || "São Paulo, Brasil";
@@ -417,59 +415,61 @@ function initGlobalVectorMap() {
         }
     });
 
+    if (!tempLayer && typeof L !== "undefined") {
+        tempLayer = L.tileLayer('https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=c8d45df9e0d1d6447d6d53ef69eb6861', {
+            opacity: 0.6,
+            maxZoom: 8,
+            noWrap: true,
+            bounds: bounds
+        });
+    }
+
+    if (!rainLayer && typeof L !== "undefined") {
+        rainLayer = L.tileLayer('https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=c8d45df9e0d1d6447d6d53ef69eb6861', {
+            opacity: 0.6,
+            maxZoom: 8,
+            noWrap: true,
+            bounds: bounds
+        });
+    }
+
     const zoomContainer = mapInstance.zoomControl.getContainer();
     if (zoomContainer) {
-        // 1. Botão Térmico Real (Foguinho) - Instanciação Ativa (Spec v7.0 Requirement)
+        // 1. Botão Térmico Real (Foguinho) - OpenWeatherMap Temperatura Layer
         const thermalBtn = document.createElement('button');
-        thermalBtn.className = 'map-btn-control-circular';
+        thermalBtn.className = 'map-btn-control-circular' + (tempLayer && mapInstance.hasLayer(tempLayer) ? ' map-btn-control-circular--active' : '');
         thermalBtn.title = 'Alternar Gradiente Térmico de Temperatura';
         thermalBtn.innerHTML = SVG_ICONS.flame;
 
         thermalBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            isHeatmapActive = !isHeatmapActive;
+            if (!mapInstance || !tempLayer) return;
 
-            if (isHeatmapActive) {
-                thermalBtn.classList.add('map-btn-control-circular--active');
-                heatmapLayerInstance = L.tileLayer('https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=93e786b1c31317540274e76a6669fb7a', {
-                    opacity: 0.55,
-                    maxZoom: 8,
-                    noWrap: true,
-                    bounds: bounds
-                }).addTo(mapInstance);
-            } else {
+            if (mapInstance.hasLayer(tempLayer)) {
+                mapInstance.removeLayer(tempLayer);
                 thermalBtn.classList.remove('map-btn-control-circular--active');
-                if (heatmapLayerInstance) {
-                    mapInstance.removeLayer(heatmapLayerInstance);
-                    heatmapLayerInstance = null;
-                }
+            } else {
+                mapInstance.addLayer(tempLayer);
+                thermalBtn.classList.add('map-btn-control-circular--active');
             }
         });
 
-        // 2. Botão de Radar de Precipitação Real (Chuva) - Instanciação Ativa (Spec v7.0 Requirement)
+        // 2. Botão de Radar de Precipitação Real (Chuva) - OpenWeatherMap Chuva Layer
         const rainBtn = document.createElement('button');
-        rainBtn.className = 'map-btn-control-circular';
+        rainBtn.className = 'map-btn-control-circular' + (rainLayer && mapInstance.hasLayer(rainLayer) ? ' map-btn-control-circular--active' : '');
         rainBtn.title = 'Alternar Radar de Precipitação de Chuva';
         rainBtn.innerHTML = SVG_ICONS.rain;
 
         rainBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            isRainActive = !isRainActive;
+            if (!mapInstance || !rainLayer) return;
 
-            if (isRainActive) {
-                rainBtn.classList.add('map-btn-control-circular--active');
-                rainLayerInstance = L.tileLayer('https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=93e786b1c31317540274e76a6669fb7a', {
-                    opacity: 0.65,
-                    maxZoom: 8,
-                    noWrap: true,
-                    bounds: bounds
-                }).addTo(mapInstance);
-            } else {
+            if (mapInstance.hasLayer(rainLayer)) {
+                mapInstance.removeLayer(rainLayer);
                 rainBtn.classList.remove('map-btn-control-circular--active');
-                if (rainLayerInstance) {
-                    mapInstance.removeLayer(rainLayerInstance);
-                    rainLayerInstance = null;
-                }
+            } else {
+                mapInstance.addLayer(rainLayer);
+                rainBtn.classList.add('map-btn-control-circular--active');
             }
         });
 
