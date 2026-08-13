@@ -100,6 +100,22 @@ async function inicio(app, queryParams = {}) {
         return { hora: horarRotulos[i], pct };
     });
 
+    const capitaisComClima = await Promise.all(CAPITAIS_BRASILEIRAS.map(async (cap) => {
+        try {
+            const data = await buscarServicos(
+                "https://api.open-meteo.com/v1/forecast",
+                { latitude: cap.lat, longitude: cap.lon, current_weather: true, timezone: "America/Sao_Paulo" },
+                `inicio-cap-${cap.nome}`
+            );
+            const t = Math.round(data?.current_weather?.temperature ?? 24);
+            const code = data?.current_weather?.weathercode ?? 0;
+            const icone = traduzirClimaWmo(code).iconeSvg;
+            return { ...cap, temp: `${t}°`, icone };
+        } catch (e) {
+            return { ...cap, temp: "24°", icone: SVG_ICONS.weatherSun };
+        }
+    }));
+
     app.innerHTML = `
         <!-- 1. VISUAL MOBILE MINIMALISTA -->
         <div class="mobile-minimalist-view">
@@ -210,15 +226,15 @@ async function inicio(app, queryParams = {}) {
                         <a href="#capitais" class="panel-cities__btn-more">Ver mais →</a>
                     </div>
                     <div class="panel-cities__list">
-                        ${CAPITAIS_BRASILEIRAS.map(cap => `
+                        ${capitaisComClima.map(cap => `
                             <a href="#inicio?cidade=${encodeURIComponent(cap.nome)}" class="city-item">
                                 <div class="city-item__info">
                                     <h4>${cap.nome}</h4>
                                     <p>Brasil • ${cap.estado}</p>
                                 </div>
                                 <div class="city-item__right">
-                                    <span class="city-item__icon">${SVG_ICONS.weatherSun}</span>
-                                    <span class="city-item__temp-val">24°</span>
+                                    <span class="city-item__icon">${cap.icone}</span>
+                                    <span class="city-item__temp-val">${cap.temp}</span>
                                 </div>
                             </a>
                         `).join('')}

@@ -20,6 +20,47 @@ function obterIconeClimaSvg(codigo) {
 }
 
 async function capitais(app) {
+    const capitaisComClima = await Promise.all(CAPITAIS_BR_8.map(async (c) => {
+        try {
+            const climaData = await buscarServicos(
+                "https://api.open-meteo.com/v1/forecast",
+                {
+                    latitude: c.lat,
+                    longitude: c.lon,
+                    current_weather: true,
+                    hourly: "relative_humidity_2m",
+                    timezone: "America/Sao_Paulo"
+                },
+                `capital-br-${c.id}`
+            );
+
+            const atual = climaData?.current_weather || { temperature: 20, windspeed: 10, weathercode: 0 };
+            const temp = Math.round(atual.temperature);
+            const vento = Math.round(atual.windspeed);
+            const iconeSvg = obterIconeClimaSvg(atual.weathercode);
+            const umidade = climaData?.hourly?.relative_humidity_2m?.[0] ?? 55;
+
+            return {
+                ...c,
+                temp: `${temp}°C`,
+                sensacao: `${temp - 1}°C`,
+                vento: `${vento} km/h`,
+                umidade: `${umidade}%`,
+                iconeSvg
+            };
+        } catch (e) {
+            console.error(`Erro ao carregar clima para ${c.nome}:`, e);
+            return {
+                ...c,
+                temp: "--°C",
+                sensacao: "Erro API",
+                vento: "-- km/h",
+                umidade: "--%",
+                iconeSvg: SVG_ICONS.weatherCloudSun
+            };
+        }
+    }));
+
     app.innerHTML = `
         <div class="capitais-container">
             <div class="capitais-header">
@@ -28,18 +69,18 @@ async function capitais(app) {
             </div>
 
             <div id="grid-capitais-br" class="capitais-grid">
-                ${CAPITAIS_BR_8.map(c => `
+                ${capitaisComClima.map(c => `
                     <div class="capital-card" id="card-capital-${c.id}">
                         <div class="capital-card__top">
                             <div>
                                 <h3 class="capital-card__name">${c.nome}</h3>
                                 <span class="capital-card__state">${c.estado} • Brasil</span>
                             </div>
-                            <span class="capital-card__icon" id="icon-cap-${c.id}">${SVG_ICONS.weatherCloudSun}</span>
+                            <span class="capital-card__icon" id="icon-cap-${c.id}">${c.iconeSvg}</span>
                         </div>
 
                         <div class="capital-card__bottom">
-                            <div class="capital-card__temp" id="temp-cap-${c.id}">--°C</div>
+                            <div class="capital-card__temp" id="temp-cap-${c.id}">${c.temp}</div>
                             <button class="capital-card__btn-toggle" data-id="${c.id}" id="btn-toggle-cap-${c.id}">
                                 <span>Ver detalhes</span>
                                 ${SVG_ICONS.chevronDown}
@@ -51,15 +92,15 @@ async function capitais(app) {
                             <div class="accordion-grid">
                                 <div class="accordion-item">
                                     <span class="accordion-item__label">Sensação</span>
-                                    <span class="accordion-item__val" id="sensacao-cap-${c.id}">--°C</span>
+                                    <span class="accordion-item__val" id="sensacao-cap-${c.id}">${c.sensacao}</span>
                                 </div>
                                 <div class="accordion-item">
                                     <span class="accordion-item__label">Vento</span>
-                                    <span class="accordion-item__val" id="vento-cap-${c.id}">-- km/h</span>
+                                    <span class="accordion-item__val" id="vento-cap-${c.id}">${c.vento}</span>
                                 </div>
                                 <div class="accordion-item">
                                     <span class="accordion-item__label">Umidade</span>
-                                    <span class="accordion-item__val" id="umidade-cap-${c.id}">--%</span>
+                                    <span class="accordion-item__val" id="umidade-cap-${c.id}">${c.umidade}</span>
                                 </div>
                                 <div class="accordion-item">
                                     <span class="accordion-item__label">Pressão</span>
@@ -76,46 +117,7 @@ async function capitais(app) {
         </div>
     `;
 
-    CAPITAIS_BR_8.forEach(capital => carregarClimaCapital(capital));
     initAccordionEvents();
-}
-
-async function carregarClimaCapital(capital) {
-    try {
-        const climaData = await buscarServicos(
-            "https://api.open-meteo.com/v1/forecast",
-            {
-                latitude: capital.lat,
-                longitude: capital.lon,
-                current_weather: true,
-                hourly: "relative_humidity_2m",
-                timezone: "America/Sao_Paulo"
-            },
-            `capital-br-${capital.id}`
-        );
-
-        const atual = climaData?.current_weather || { temperature: 20, windspeed: 10, weathercode: 0 };
-        const temp = Math.round(atual.temperature);
-        const vento = Math.round(atual.windspeed);
-        const iconeSvg = obterIconeClimaSvg(atual.weathercode);
-        const umidade = climaData?.hourly?.relative_humidity_2m?.[0] ?? 55;
-
-        const elemTemp = document.getElementById(`temp-cap-${capital.id}`);
-        const elemIcon = document.getElementById(`icon-cap-${capital.id}`);
-        const elemSensacao = document.getElementById(`sensacao-cap-${capital.id}`);
-        const elemVento = document.getElementById(`vento-cap-${capital.id}`);
-        const elemUmidade = document.getElementById(`umidade-cap-${capital.id}`);
-
-        if (elemTemp) elemTemp.textContent = `${temp}°C`;
-        if (elemIcon) elemIcon.innerHTML = iconeSvg;
-        if (elemSensacao) elemSensacao.textContent = `${temp - 1}°C`;
-        if (elemVento) elemVento.textContent = `${vento} km/h`;
-        if (elemUmidade) elemUmidade.textContent = `${umidade}%`;
-    } catch (e) {
-        console.error(`Erro ao carregar clima para ${capital.nome}:`, e);
-        const elemSensacao = document.getElementById(`sensacao-cap-${capital.id}`);
-        if (elemSensacao) elemSensacao.textContent = "Erro API";
-    }
 }
 
 function initAccordionEvents() {

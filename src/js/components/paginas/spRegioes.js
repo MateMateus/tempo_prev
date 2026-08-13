@@ -20,6 +20,47 @@ function obterIconeClimaSvg(codigo) {
 }
 
 async function spRegioes(app) {
+    const regioesComClima = await Promise.all(REGIOES_SP.map(async (r) => {
+        try {
+            const climaData = await buscarServicos(
+                "https://api.open-meteo.com/v1/forecast",
+                {
+                    latitude: r.lat,
+                    longitude: r.lon,
+                    current_weather: true,
+                    hourly: "relative_humidity_2m",
+                    timezone: "America/Sao_Paulo"
+                },
+                `regiao-sp-${r.id}`
+            );
+
+            const atual = climaData?.current_weather || { temperature: 20, windspeed: 10, weathercode: 0 };
+            const temp = Math.round(atual.temperature);
+            const vento = Math.round(atual.windspeed);
+            const iconeSvg = obterIconeClimaSvg(atual.weathercode);
+            const umidade = climaData?.hourly?.relative_humidity_2m?.[0] ?? 55;
+
+            return {
+                ...r,
+                temp: `${temp}°C`,
+                sensacao: `${temp - 1}°C`,
+                vento: `${vento} km/h`,
+                umidade: `${umidade}%`,
+                iconeSvg
+            };
+        } catch (e) {
+            console.error(`Erro ao carregar clima para ${r.nome}:`, e);
+            return {
+                ...r,
+                temp: "--°C",
+                sensacao: "Erro API",
+                vento: "-- km/h",
+                umidade: "--%",
+                iconeSvg: SVG_ICONS.weatherCloudSun
+            };
+        }
+    }));
+
     app.innerHTML = `
         <div class="regioes-container">
             <div class="regioes-header">
@@ -28,18 +69,18 @@ async function spRegioes(app) {
             </div>
 
             <div id="grid-regioes-sp" class="regioes-grid">
-                ${REGIOES_SP.map(r => `
+                ${regioesComClima.map(r => `
                     <div class="regiao-card" id="card-regiao-${r.id}">
                         <div class="regiao-card__top">
                             <div>
                                 <h3 class="regiao-card__name">${r.nome}</h3>
                                 <span class="regiao-card__state">${r.cidade} • SP</span>
                             </div>
-                            <span class="regiao-card__icon" id="icon-${r.id}">${SVG_ICONS.weatherCloudSun}</span>
+                            <span class="regiao-card__icon" id="icon-${r.id}">${r.iconeSvg}</span>
                         </div>
 
                         <div class="regiao-card__bottom">
-                            <div class="regiao-card__temp" id="temp-${r.id}">--°C</div>
+                            <div class="regiao-card__temp" id="temp-${r.id}">${r.temp}</div>
                             <button class="regiao-card__btn-toggle" data-id="${r.id}" id="btn-toggle-${r.id}">
                                 <span>Ver detalhes</span>
                                 ${SVG_ICONS.chevronDown}
@@ -51,15 +92,15 @@ async function spRegioes(app) {
                             <div class="accordion-grid">
                                 <div class="accordion-item">
                                     <span class="accordion-item__label">Sensação</span>
-                                    <span class="accordion-item__val" id="sensacao-${r.id}">--°C</span>
+                                    <span class="accordion-item__val" id="sensacao-${r.id}">${r.sensacao}</span>
                                 </div>
                                 <div class="accordion-item">
                                     <span class="accordion-item__label">Vento</span>
-                                    <span class="accordion-item__val" id="vento-${r.id}">-- km/h</span>
+                                    <span class="accordion-item__val" id="vento-${r.id}">${r.vento}</span>
                                 </div>
                                 <div class="accordion-item">
                                     <span class="accordion-item__label">Umidade</span>
-                                    <span class="accordion-item__val" id="umidade-${r.id}">--%</span>
+                                    <span class="accordion-item__val" id="umidade-${r.id}">${r.umidade}</span>
                                 </div>
                                 <div class="accordion-item">
                                     <span class="accordion-item__label">Pressão</span>
@@ -76,46 +117,7 @@ async function spRegioes(app) {
         </div>
     `;
 
-    REGIOES_SP.forEach(regiao => carregarClimaRegiao(regiao));
     initAccordionEvents();
-}
-
-async function carregarClimaRegiao(regiao) {
-    try {
-        const climaData = await buscarServicos(
-            "https://api.open-meteo.com/v1/forecast",
-            {
-                latitude: regiao.lat,
-                longitude: regiao.lon,
-                current_weather: true,
-                hourly: "relative_humidity_2m",
-                timezone: "America/Sao_Paulo"
-            },
-            `regiao-sp-${regiao.id}`
-        );
-
-        const atual = climaData?.current_weather || { temperature: 20, windspeed: 10, weathercode: 0 };
-        const temp = Math.round(atual.temperature);
-        const vento = Math.round(atual.windspeed);
-        const iconeSvg = obterIconeClimaSvg(atual.weathercode);
-        const umidade = climaData?.hourly?.relative_humidity_2m?.[0] ?? 55;
-
-        const elemTemp = document.getElementById(`temp-${regiao.id}`);
-        const elemIcon = document.getElementById(`icon-${regiao.id}`);
-        const elemSensacao = document.getElementById(`sensacao-${regiao.id}`);
-        const elemVento = document.getElementById(`vento-${regiao.id}`);
-        const elemUmidade = document.getElementById(`umidade-${regiao.id}`);
-
-        if (elemTemp) elemTemp.textContent = `${temp}°C`;
-        if (elemIcon) elemIcon.innerHTML = iconeSvg;
-        if (elemSensacao) elemSensacao.textContent = `${temp - 1}°C`;
-        if (elemVento) elemVento.textContent = `${vento} km/h`;
-        if (elemUmidade) elemUmidade.textContent = `${umidade}%`;
-    } catch (e) {
-        console.error(`Erro ao carregar clima para ${regiao.nome}:`, e);
-        const elemSensacao = document.getElementById(`sensacao-${regiao.id}`);
-        if (elemSensacao) elemSensacao.textContent = "Erro API";
-    }
 }
 
 function initAccordionEvents() {
