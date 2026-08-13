@@ -490,12 +490,6 @@
     display: none;
 }
 
-/* HIGH-RES SUPPORT (1440px to 2560px) */
-@media (min-width: 1440px) {
-    .hero-card__metrics-vertical {
-        gap: 0.5rem;
-    }
-}
 
 /* BREAKPOINT TABLET/NOTEBOOK 768PX-1024PX (Spec v7.0 Requirement: 4 cards top, 1 hero middle, 2 cards bottom) */
 @media (min-width: 768px) and (max-width: 1024px) {
@@ -723,6 +717,10 @@
         display: flex;
         flex-direction: column;
         justify-content: space-between;
+    }
+
+    .hero-card__metrics-vertical {
+        gap: 0.5rem;
     }
 
     .hero-card__metrics-vertical,

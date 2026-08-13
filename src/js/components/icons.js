@@ -89,34 +89,6 @@ export const SVG_ICONS = {
             <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25"/>
         </svg>
     `,
-    sunrise: `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M17 18a5 5 0 0 0-10 0"/>
-            <line x1="12" y1="2" x2="12" y2="9"/>
-            <line x1="4.22" y1="10.22" x2="5.64" y2="11.64"/>
-            <line x1="1" y1="18" x2="3" y2="18"/>
-            <line x1="21" y1="18" x2="23" y2="18"/>
-            <line x1="18.36" y1="11.64" x2="19.78" y2="10.22"/>
-            <polyline points="8 6 12 2 16 6"/>
-        </svg>
-    `,
-    sunset: `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M17 18a5 5 0 0 0-10 0"/>
-            <line x1="12" y1="9" x2="12" y2="16"/>
-            <line x1="4.22" y1="10.22" x2="5.64" y2="11.64"/>
-            <line x1="1" y1="18" x2="3" y2="18"/>
-            <line x1="21" y1="18" x2="23" y2="18"/>
-            <line x1="18.36" y1="11.64" x2="19.78" y2="10.22"/>
-            <polyline points="8 12 12 16 16 12"/>
-        </svg>
-    `,
-    gauge: `
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/>
-            <path d="M12 6v6l4 2"/>
-        </svg>
-    `,
     flame: `
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3.5z"/>
