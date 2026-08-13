@@ -134,12 +134,14 @@ async function inicio(app, queryParams = {}) {
             <div class="mobile-hourly-section">
                 <h3>Previsão por Hora</h3>
                 <div class="hourly-carousel">
-                    ${(climaData?.hourly?.time || []).slice(0, 12).map((timeStr, idx) => {
-                        const hora = timeStr ? timeStr.split("T")[1]?.substring(0, 5) || "00:00" : "00:00";
-                        const tHora = Math.round(climaData?.hourly?.temperature_2m?.[idx] ?? tempAtual);
-                        const codeHora = climaData?.hourly?.weather_code?.[idx] ?? 0;
+                    ${[0, 3, 6, 9, 12, 15, 18, 21].map((apiIdx, i) => {
+                        const timeStr = climaData?.hourly?.time?.[apiIdx];
+                        const defaultLabel = ["00:00", "03:00", "06:00", "09:00", "12:00", "15:00", "18:00", "21:00"][i];
+                        const hora = timeStr ? timeStr.split("T")[1]?.substring(0, 5) || defaultLabel : defaultLabel;
+                        const tHora = Math.round(climaData?.hourly?.temperature_2m?.[apiIdx] ?? tempAtual);
+                        const codeHora = climaData?.hourly?.weather_code?.[apiIdx] ?? 0;
                         const iconeHoraSvg = traduzirClimaWmo(codeHora).iconeSvg;
-                        const isNow = idx === 0;
+                        const isNow = i === 0;
 
                         return `
                             <div class="hourly-card ${isNow ? 'hourly-card--active' : ''}">
