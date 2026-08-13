@@ -15,7 +15,6 @@ const memoriaTemporaria = {
         const mudouODia = envelope.dateStr !== hojeStr;
 
         if (estaExpirado || mudouODia) {
-            console.log(`[STORAGE MEM] Cache expirado para a chave: ${chave} (Expirado: ${estaExpirado}, Novo Dia: ${mudouODia})`);
             this._cache.delete(chave);
             return false;
         }
@@ -54,7 +53,6 @@ const memoriaPermanente = {
             const mudouODia = envelope.dateStr !== hojeStr;
 
             if (estaExpirado || mudouODia) {
-                console.log(`[STORAGE LOCAL] Cache expirado para a chave: ${chave} (Expirado: ${estaExpirado}, Novo Dia: ${mudouODia})`);
                 localStorage.removeItem(chave);
                 return false;
             }

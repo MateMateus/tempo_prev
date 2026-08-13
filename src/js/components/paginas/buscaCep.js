@@ -276,7 +276,7 @@ async function initCepMiniMap(lat, lon, bairro, cidade) {
                 }
             }
         } catch (e) {
-            console.warn("Consulta Nominatim GeoJSON não disponível, aplicando fallback:", e);
+            // Fallback silencioso para contorno padrão em caso de indisponibilidade
         }
     }
 
