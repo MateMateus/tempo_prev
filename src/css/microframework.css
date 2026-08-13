@@ -153,10 +153,13 @@ input, select, textarea {
     gap: 0.75rem;
 }
 
-/* Dedicated Mobile Search Button */
+/* Dedicated Mobile Search Button (Hidden on Desktop) */
+.btn-search-mobile,
+.mobile-search-btn,
 .bem-navbar__search-mobile-btn {
-    display: none;
+    display: none !important;
 }
+
 
 .bem-navbar__theme-btn {
     width: 40px;
@@ -366,8 +369,10 @@ input, select, textarea {
         border-bottom: 1px solid var(--border-color);
     }
 
+    .btn-search-mobile,
+    .mobile-search-btn,
     .bem-navbar__search-mobile-btn {
-        display: flex;
+        display: flex !important;
     }
 
     .bem-navbar__location-badge {

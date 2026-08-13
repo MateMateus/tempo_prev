@@ -35,7 +35,7 @@ function navbar(rotas) {
 
                 <div class="bem-navbar__right">
                     <!-- Botão de Busca Dedicado no Mobile (Spec v7.0 Requirement) -->
-                    <button id="btn-search-mobile" class="bem-navbar__theme-btn bem-navbar__search-mobile-btn" title="Pesquisar Cidade">
+                    <button id="btn-search-mobile" class="bem-navbar__theme-btn bem-navbar__search-mobile-btn btn-search-mobile mobile-search-btn" title="Pesquisar Cidade">
                         ${SVG_ICONS.search}
                     </button>
 
