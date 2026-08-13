@@ -159,6 +159,54 @@
     transition: font-size 0.2s ease, font-weight 0.2s ease;
 }
 
+/* Hero Header Layout (Prevenção de Sobreposição de Texto) */
+.hero-card__header {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.hero-card__header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+}
+
+.hero-card__day-badge {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    flex: 1;
+}
+
+.hero-card__condition-tag {
+    font-size: 0.775rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 0;
+    max-width: 110px;
+    text-align: right;
+}
+
+.hero-card__city-sub {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+}
+
 /* Hero Temp & Icon Layout */
 .hero-card__temp-row {
     display: flex;
