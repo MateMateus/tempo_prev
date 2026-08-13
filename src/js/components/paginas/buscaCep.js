@@ -13,6 +13,11 @@ function traduzirClimaWmo(codigo) {
 }
 
 async function buscaCep(app) {
+    if (cepMapInstance) {
+        cepMapInstance.remove();
+        cepMapInstance = null;
+    }
+
     app.innerHTML = `
         <div class="cep-container">
             <div class="cep-card">
@@ -225,8 +230,12 @@ async function initCepMiniMap(lat, lon, bairro, cidade) {
     cepMapInstance = L.map("cep-map", {
         center: [lat, lon],
         zoom: initialZoom,
-        dragging: true,
+        dragging: false,
         scrollWheelZoom: false,
+        doubleClickZoom: false,
+        touchZoom: false,
+        boxZoom: false,
+        keyboard: false,
         zoomControl: true
     });
 

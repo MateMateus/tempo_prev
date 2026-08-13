@@ -134,6 +134,17 @@
     z-index: 1;
 }
 
+/* Centralização Vertical dos Controles de Zoom no Mini-Mapa do CEP (Spec v10.0) */
+#cep-map .leaflet-control-zoom,
+.cep-map-container .leaflet-control-zoom {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    margin: 0 !important;
+    z-index: 1000;
+}
+
 @media (max-width: 600px) {
     .cep-form {
         flex-direction: column;
@@ -143,3 +154,4 @@
         padding: 1.25rem;
     }
 }
+
