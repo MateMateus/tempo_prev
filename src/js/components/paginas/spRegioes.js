@@ -2,6 +2,7 @@ import buscarServicos from "../services/apiCache.js";
 import { SVG_ICONS } from "../icons.js";
 import { obterIconeClimaSvg } from "../../utils/weatherUtils.js";
 import { initAccordionEvents } from "../../utils/accordion.js";
+import { renderGridSkeleton } from "../../utils/uiHelpers.js";
 
 const REGIOES_SP = [
     { id: "capital", nome: "Capital / Grande SP", cidade: "São Paulo", lat: -23.5505, lon: -46.6333 },
@@ -15,6 +16,20 @@ const REGIOES_SP = [
 ];
 
 async function spRegioes(app) {
+    // Renderiza a estrutura inicial com Skeleton Loader imediatamente
+    app.innerHTML = `
+        <div class="regioes-container">
+            <div class="regioes-header">
+                <h1 class="regioes-title">${SVG_ICONS.map} Clima nas Regiões de São Paulo</h1>
+                <p class="regioes-subtitle">Monitoramento em tempo real das 8 principais macrorregiões e polos econômicos do Estado de SP.</p>
+            </div>
+
+            <div id="grid-regioes-sp" class="regioes-grid">
+                ${renderGridSkeleton(8)}
+            </div>
+        </div>
+    `;
+
     const regioesComClima = await Promise.all(REGIOES_SP.map(async (r) => {
         try {
             const climaData = await buscarServicos(
@@ -56,63 +71,55 @@ async function spRegioes(app) {
         }
     }));
 
-    app.innerHTML = `
-        <div class="regioes-container">
-            <div class="regioes-header">
-                <h1 class="regioes-title">${SVG_ICONS.map} Clima nas Regiões de São Paulo</h1>
-                <p class="regioes-subtitle">Monitoramento em tempo real das 8 principais macrorregiões e polos econômicos do Estado de SP.</p>
-            </div>
+    const gridContainer = document.getElementById("grid-regioes-sp");
+    if (gridContainer) {
+        gridContainer.innerHTML = regioesComClima.map(r => `
+            <div class="regiao-card" id="card-regiao-${r.id}">
+                <div class="regiao-card__top">
+                    <div>
+                        <h3 class="regiao-card__name">${r.nome}</h3>
+                        <span class="regiao-card__state">${r.cidade} • SP</span>
+                    </div>
+                    <span class="regiao-card__icon" id="icon-${r.id}">${r.iconeSvg}</span>
+                </div>
 
-            <div id="grid-regioes-sp" class="regioes-grid">
-                ${regioesComClima.map(r => `
-                    <div class="regiao-card" id="card-regiao-${r.id}">
-                        <div class="regiao-card__top">
-                            <div>
-                                <h3 class="regiao-card__name">${r.nome}</h3>
-                                <span class="regiao-card__state">${r.cidade} • SP</span>
-                            </div>
-                            <span class="regiao-card__icon" id="icon-${r.id}">${r.iconeSvg}</span>
+                <div class="regiao-card__bottom">
+                    <div class="regiao-card__temp" id="temp-${r.id}">${r.temp}</div>
+                    <button class="regiao-card__btn-toggle" data-id="${r.id}" id="btn-toggle-${r.id}">
+                        <span>Ver detalhes</span>
+                        ${SVG_ICONS.chevronDown}
+                    </button>
+                </div>
+
+                <!-- Accordion Expansível de Detalhes Climáticos -->
+                <div class="regiao-card__accordion" id="accordion-${r.id}">
+                    <div class="accordion-grid">
+                        <div class="accordion-item">
+                            <span class="accordion-item__label">Sensação</span>
+                            <span class="accordion-item__val" id="sensacao-${r.id}">${r.sensacao}</span>
                         </div>
-
-                        <div class="regiao-card__bottom">
-                            <div class="regiao-card__temp" id="temp-${r.id}">${r.temp}</div>
-                            <button class="regiao-card__btn-toggle" data-id="${r.id}" id="btn-toggle-${r.id}">
-                                <span>Ver detalhes</span>
-                                ${SVG_ICONS.chevronDown}
-                            </button>
+                        <div class="accordion-item">
+                            <span class="accordion-item__label">Vento</span>
+                            <span class="accordion-item__val" id="vento-${r.id}">${r.vento}</span>
                         </div>
-
-                        <!-- Accordion Expansível de Detalhes Climáticos -->
-                        <div class="regiao-card__accordion" id="accordion-${r.id}">
-                            <div class="accordion-grid">
-                                <div class="accordion-item">
-                                    <span class="accordion-item__label">Sensação</span>
-                                    <span class="accordion-item__val" id="sensacao-${r.id}">${r.sensacao}</span>
-                                </div>
-                                <div class="accordion-item">
-                                    <span class="accordion-item__label">Vento</span>
-                                    <span class="accordion-item__val" id="vento-${r.id}">${r.vento}</span>
-                                </div>
-                                <div class="accordion-item">
-                                    <span class="accordion-item__label">Umidade</span>
-                                    <span class="accordion-item__val" id="umidade-${r.id}">${r.umidade}</span>
-                                </div>
-                                <div class="accordion-item">
-                                    <span class="accordion-item__label">Pressão</span>
-                                    <span class="accordion-item__val" id="pressao-${r.id}">1013 hPa</span>
-                                </div>
-                            </div>
-                            <div style="margin-top: 0.75rem; text-align: right;">
-                                <a href="#inicio?cidade=${encodeURIComponent(r.cidade)}" style="font-size: 0.775rem; color: var(--text-primary); text-decoration: underline; font-weight: 600;">Abrir no Dashboard →</a>
-                            </div>
+                        <div class="accordion-item">
+                            <span class="accordion-item__label">Umidade</span>
+                            <span class="accordion-item__val" id="umidade-${r.id}">${r.umidade}</span>
+                        </div>
+                        <div class="accordion-item">
+                            <span class="accordion-item__label">Pressão</span>
+                            <span class="accordion-item__val" id="pressao-${r.id}">1013 hPa</span>
                         </div>
                     </div>
-                `).join('')}
+                    <div style="margin-top: 0.75rem; text-align: right;">
+                        <a href="#inicio?cidade=${encodeURIComponent(r.cidade)}" style="font-size: 0.775rem; color: var(--text-primary); text-decoration: underline; font-weight: 600;">Abrir no Dashboard →</a>
+                    </div>
+                </div>
             </div>
-        </div>
-    `;
+        `).join('');
 
-    initAccordionEvents('.regiao-card__btn-toggle', 'accordion-', 'regiao-card__accordion--open');
+        initAccordionEvents('.regiao-card__btn-toggle', 'accordion-', 'regiao-card__accordion--open');
+    }
 }
 
 export default {

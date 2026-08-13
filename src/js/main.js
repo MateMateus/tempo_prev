@@ -27,6 +27,9 @@ const rota404 = {
 };
 
 async function render() {
+    // Scroll ao topo no início da troca de rota
+    window.scrollTo({ top: 0, behavior: 'instant' });
+
     let fullHash = window.location.hash || '#inicio';
     
     // Support query params in hash, e.g. #inicio?cidade=São%20Paulo
@@ -53,6 +56,13 @@ async function render() {
             link.classList.remove('bem-drawer__link--active');
         }
     });
+
+    if (app) {
+        app.classList.remove('app-fade-in');
+        // Force reflow for CSS animation reset
+        void app.offsetWidth;
+        app.classList.add('app-fade-in');
+    }
 
     try {
         // Render Page with container and parameters

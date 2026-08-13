@@ -78,7 +78,22 @@ async function buscaCep(app) {
                 return;
             }
 
-            await processarBuscaCep(rawCep);
+            const btnSubmit = formCep.querySelector("button[type='submit']");
+            let origContent = "";
+            if (btnSubmit) {
+                origContent = btnSubmit.innerHTML;
+                btnSubmit.disabled = true;
+                btnSubmit.innerHTML = `<span>⏳</span> <span>Buscando...</span>`;
+            }
+
+            try {
+                await processarBuscaCep(rawCep);
+            } finally {
+                if (btnSubmit) {
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = origContent;
+                }
+            }
         });
     }
 }
