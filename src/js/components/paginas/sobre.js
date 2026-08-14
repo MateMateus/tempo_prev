@@ -9,7 +9,7 @@ async function sobre(app) {
 
                 <div style="text-align: left; line-height: 1.6; color: var(--text-secondary); display: flex; flex-direction: column; gap: 1rem;">
                     <div style="background-color: var(--bg-card-hover); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-                        <h3 style="color: var(--text-primary); margin-bottom: 0.5rem;">⚙️ Arquitetura & Tecnologias</h3>
+                        <h3 style="color: var(--text-primary); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">${SVG_ICONS.dashboard} Arquitetura & Tecnologias</h3>
                         <ul style="padding-left: 1.25rem;">
                             <li><strong>Vanilla JS (ES Modules)</strong>: Sem frameworks externos (React, Vue, Angular).</li>
                             <li><strong>Navegação SPA</strong>: Roteamento baseado no evento hashchange.</li>
@@ -19,7 +19,7 @@ async function sobre(app) {
                     </div>
 
                     <div style="background-color: var(--bg-card-hover); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-                        <h3 style="color: var(--text-primary); margin-bottom: 0.5rem;">👨‍💻 Desenvolvedor</h3>
+                        <h3 style="color: var(--text-primary); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">${SVG_ICONS.info} Desenvolvedor</h3>
                         <p>Desenvolvido por <strong>Mateus Braga (MateMateus)</strong> • © 2026</p>
                     </div>
                 </div>

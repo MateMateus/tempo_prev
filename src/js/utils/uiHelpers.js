@@ -1,5 +1,5 @@
 /**
- * Utilitários para renderização de estados de interface (Skeleton Loaders).
+ * Utilitários para renderização de estados de interface (Skeleton Loaders) e sanitização de URLs.
  */
 
 /**
@@ -23,4 +23,24 @@ export function renderGridSkeleton(quantidade = 8) {
             </div>
         </div>
     `).join('');
+}
+
+/**
+ * Converte o nome de uma cidade em um slug limpo para URL (sem acentos, minúsculo, com hífens).
+ * Trata formatos como "Rio de Janeiro, BR" ou "Rio de Janeiro, Rio de Janeiro" extraindo apenas o nome da cidade.
+ * Exemplo: "São Paulo, SP" -> "sao-paulo", "Rio de Janeiro, BR" -> "rio-de-janeiro"
+ * @param {string} nome 
+ * @returns {string}
+ */
+export function gerarSlugCidade(nome) {
+    if (!nome) return "";
+    // Extrai apenas o nome principal antes de vírgula ou hífen composto
+    const partes = nome.split(",");
+    const nomePrincipal = partes[0].trim();
+    return nomePrincipal
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/[^a-z0-9-]/g, "");
 }

@@ -1,8 +1,10 @@
 import navbar from './components/navbar/navbar.js';
 import footer from './components/footer/footer.js';
 import roteador from './components/rotas/rotas.js';
+import { initDefensivePerformanceGuard } from './utils/performance.js';
 
-// Init Navbar & Footer
+// Init Performance Guard, Navbar & Footer
+initDefensivePerformanceGuard();
 navbar(roteador);
 footer();
 
@@ -31,18 +33,25 @@ async function render() {
     window.scrollTo({ top: 0, behavior: 'instant' });
 
     let fullHash = window.location.hash || '#inicio';
-    
-    // Support query params in hash, e.g. #inicio?cidade=São%20Paulo
-    const queryIndex = fullHash.indexOf('?');
     let baseHash = fullHash;
     let queryParams = {};
     
-    if (queryIndex !== -1) {
-        baseHash = fullHash.substring(0, queryIndex);
-        const queryString = fullHash.substring(queryIndex + 1);
-        const urlParams = new URLSearchParams(queryString);
-        for (const [key, value] of urlParams.entries()) {
-            queryParams[key] = value;
+    // Suporte ao formato de rota limpa #clima/rio-de-janeiro
+    if (fullHash.startsWith('#clima/')) {
+        baseHash = '#inicio';
+        const slug = fullHash.substring(7).trim();
+        if (slug) {
+            queryParams.cidade = slug;
+        }
+    } else {
+        const queryIndex = fullHash.indexOf('?');
+        if (queryIndex !== -1) {
+            baseHash = fullHash.substring(0, queryIndex);
+            const queryString = fullHash.substring(queryIndex + 1);
+            const urlParams = new URLSearchParams(queryString);
+            for (const [key, value] of urlParams.entries()) {
+                queryParams[key] = value;
+            }
         }
     }
     

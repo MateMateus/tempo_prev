@@ -25,6 +25,15 @@
     gap: 0.6rem;
 }
 
+.regioes-title svg {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    flex-shrink: 0;
+    object-fit: contain;
+}
+
 .regioes-subtitle {
     font-size: 0.95rem;
     color: var(--text-secondary);
@@ -35,6 +44,7 @@
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 1.25rem;
+    align-items: start;
 }
 
 .regiao-card {
@@ -47,6 +57,7 @@
     justify-content: space-between;
     box-shadow: var(--shadow-card);
     transition: transform var(--transition-fast), border-color var(--transition-fast);
+    height: fit-content;
 }
 
 .regiao-card:hover {

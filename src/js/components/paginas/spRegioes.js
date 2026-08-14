@@ -2,7 +2,7 @@ import buscarServicos from "../services/apiCache.js";
 import { SVG_ICONS } from "../icons.js";
 import { obterIconeClimaSvg } from "../../utils/weatherUtils.js";
 import { initAccordionEvents } from "../../utils/accordion.js";
-import { renderGridSkeleton } from "../../utils/uiHelpers.js";
+import { renderGridSkeleton, gerarSlugCidade } from "../../utils/uiHelpers.js";
 
 const REGIOES_SP = [
     { id: "capital", nome: "Capital / Grande SP", cidade: "São Paulo", lat: -23.5505, lon: -46.6333 },
@@ -112,7 +112,7 @@ async function spRegioes(app) {
                         </div>
                     </div>
                     <div style="margin-top: 0.75rem; text-align: right;">
-                        <a href="#inicio?cidade=${encodeURIComponent(r.cidade)}" style="font-size: 0.775rem; color: var(--text-primary); text-decoration: underline; font-weight: 600;">Abrir no Dashboard →</a>
+                        <a href="#clima/${gerarSlugCidade(r.cidade)}" style="font-size: 0.775rem; color: var(--text-primary); text-decoration: underline; font-weight: 600;">Abrir no Dashboard →</a>
                     </div>
                 </div>
             </div>

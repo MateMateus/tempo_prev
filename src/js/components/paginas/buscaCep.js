@@ -83,7 +83,7 @@ async function buscaCep(app) {
             if (btnSubmit) {
                 origContent = btnSubmit.innerHTML;
                 btnSubmit.disabled = true;
-                btnSubmit.innerHTML = `<span>⏳</span> <span>Buscando...</span>`;
+                btnSubmit.innerHTML = `<span>${SVG_ICONS.spinner}</span> <span>Buscando...</span>`;
             }
 
             try {
