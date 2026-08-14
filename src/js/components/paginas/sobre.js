@@ -32,5 +32,8 @@ export default {
     url: "#sobre",
     label: "Sobre",
     icone: SVG_ICONS.info,
-    pagina: sobre
+    mount: sobre,
+    unmount: () => {},
+    pagina: sobre,
+    cleanup: () => {}
 };

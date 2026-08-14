@@ -13,7 +13,7 @@ let mapInstance = null;
 let tileLayerInstance = null;
 let onThemeChangedHandler = null;
 
-function cleanupGlobalMap() {
+export function cleanupGlobalMap() {
     if (onThemeChangedHandler) {
         window.removeEventListener('themeChanged', onThemeChangedHandler);
         onThemeChangedHandler = null;

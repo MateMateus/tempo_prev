@@ -1,6 +1,7 @@
 import buscarServicos from "../services/apiCache.js";
 import { SVG_ICONS } from "../icons.js";
 import { traduzirClimaWmo } from "../../utils/weatherUtils.js";
+import { escapeHtml } from "../../utils/sanitizer.js";
 
 let cepMapInstance = null;
 let cepTileLayerInstance = null;
@@ -121,20 +122,42 @@ async function processarBuscaCep(cepLimpo) {
             return;
         }
 
-        const bairroLogradouro = dadosEndereco.logradouro || dadosEndereco.bairro || dadosEndereco.localidade;
-        const termoBusca = `${bairroLogradouro}, ${dadosEndereco.localidade}, ${dadosEndereco.uf}, Brasil`;
+        // Geocodificação em 3 Etapas Resilientes
+        let lat = null;
+        let lon = null;
 
-        const geoData = await buscarServicos(
-            "https://geocoding-api.open-meteo.com/v1/search",
-            { name: termoBusca, count: 1, language: "pt", format: "json" },
-            `geo-${dadosEndereco.localidade}-${cepLimpo}`
-        );
+        // 1ª Tentativa: Bairro, Localidade, UF
+        if (dadosEndereco.bairro) {
+            const termoBairro = `${dadosEndereco.bairro}, ${dadosEndereco.localidade}, ${dadosEndereco.uf}`;
+            const geoBairro = await buscarServicos(
+                "https://geocoding-api.open-meteo.com/v1/search",
+                { name: termoBairro, count: 1, language: "pt", format: "json" },
+                `geo-bairro-${cepLimpo}`
+            );
+            if (geoBairro && geoBairro.results && geoBairro.results.length > 0) {
+                lat = geoBairro.results[0].latitude;
+                lon = geoBairro.results[0].longitude;
+            }
+        }
 
-        let lat = -23.5505;
-        let lon = -46.6333;
-        if (geoData && geoData.results && geoData.results.length > 0) {
-            lat = geoData.results[0].latitude;
-            lon = geoData.results[0].longitude;
+        // 2ª Tentativa (fallback): Localidade, UF, Brasil
+        if (lat === null || lon === null) {
+            const termoCidade = `${dadosEndereco.localidade}, ${dadosEndereco.uf}, Brasil`;
+            const geoCidade = await buscarServicos(
+                "https://geocoding-api.open-meteo.com/v1/search",
+                { name: termoCidade, count: 1, language: "pt", format: "json" },
+                `geo-${dadosEndereco.localidade}-${cepLimpo}`
+            );
+            if (geoCidade && geoCidade.results && geoCidade.results.length > 0) {
+                lat = geoCidade.results[0].latitude;
+                lon = geoCidade.results[0].longitude;
+            }
+        }
+
+        // 3ª Tentativa (fallback final): Coordenadas genéricas da capital
+        if (lat === null || lon === null) {
+            lat = -23.5505;
+            lon = -46.6333;
         }
 
         const climaData = await buscarServicos(
@@ -337,9 +360,23 @@ async function initCepMiniMap(lat, lon, bairro, cidade) {
     window.addEventListener('themeChanged', onThemeChangedHandler);
 }
 
+export function cleanupBuscaCepMap() {
+    if (onThemeChangedHandler) {
+        window.removeEventListener('themeChanged', onThemeChangedHandler);
+        onThemeChangedHandler = null;
+    }
+    if (cepMapInstance) {
+        cepMapInstance.remove();
+        cepMapInstance = null;
+    }
+}
+
 export default {
     url: "#busca-cep",
     label: "Busca por CEP",
     icone: SVG_ICONS.location,
-    pagina: buscaCep
+    mount: buscaCep,
+    unmount: cleanupBuscaCepMap,
+    pagina: buscaCep,
+    cleanup: cleanupBuscaCepMap
 };

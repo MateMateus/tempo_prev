@@ -4,7 +4,7 @@
  */
 
 export function safeGetStartTime(entry) {
-    if (!entry || typeof entry.startTime === 'undefined') {
+    if (!entry || typeof entry?.startTime === 'undefined') {
         return 0;
     }
     return entry.startTime;
@@ -12,26 +12,34 @@ export function safeGetStartTime(entry) {
 
 export function reportAllChanges(entries, callback) {
     if (!entries) return;
-    const list = Array.isArray(entries) ? entries : [entries];
-    list.forEach(entry => {
-        if (entry && typeof entry.startTime !== 'undefined') {
-            if (typeof callback === 'function') {
-                callback(entry);
+    try {
+        const list = Array.isArray(entries) ? entries : [entries];
+        list.forEach(entry => {
+            if (entry && typeof entry?.startTime !== 'undefined') {
+                if (typeof callback === 'function') {
+                    callback(entry);
+                }
             }
-        }
-    });
+        });
+    } catch (e) {
+        console.warn('[PerformanceGuard] Exceção em reportAllChanges prevenida:', e);
+    }
 }
 
 export function initDefensivePerformanceGuard() {
     if (typeof window === 'undefined') return;
 
-    // Garantir que chamadas globais legadas a reportAllChanges não quebrem
+    // Garantir que o namespace et e reportAllChanges fiquem seguros contra chamadas de terceiros
+    if (!window.et) {
+        window.et = {};
+    }
+    window.et.reportAllChanges = reportAllChanges;
     window.reportAllChanges = reportAllChanges;
 
     // Interceptador defensivo global contra Uncaught TypeError em startTime
     const originalError = window.onerror;
     window.onerror = function (msg, url, line, col, error) {
-        if (typeof msg === 'string' && (msg.includes("startTime") || msg.includes("reportAllChanges"))) {
+        if (typeof msg === 'string' && (msg.includes("startTime") || msg.includes("reportAllChanges") || msg.includes("reading 'startTime'"))) {
             console.warn('[PerformanceGuard] Exceção defensiva de startTime interceptada com sucesso:', msg);
             return true; // Previne exibição de exceção não tratada no console
         }

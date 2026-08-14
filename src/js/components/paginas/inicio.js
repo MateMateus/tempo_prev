@@ -1,6 +1,7 @@
 import buscarServicos from "../services/apiCache.js";
 import { SVG_ICONS } from "../icons.js";
 import { gerarSlugCidade } from "../../utils/uiHelpers.js";
+import { cleanupGlobalMap } from "../inicio/mapaGlobal.js";
 
 const CAPITAIS_BRASILEIRAS = [
     { nome: "São Paulo", estado: "SP", lat: -23.5505, lon: -46.6333 },
@@ -352,7 +353,18 @@ async function inicio(app, queryParams = {}) {
 
     initGridEvents(climaData, cidadeNome, horarioAtualStr, tempAtual, umidadeAtual, ventoSpeed);
     initMobileDailyEvents(climaData, cidadeNome);
-    initGlobalVectorMap(capitaisGlobaisComClima);
+
+    // Otimização de LCP: Adia a renderização do mapa pesado para o tempo ocioso (Idle Time),
+    // garantindo que os cards de temperatura, cidade e ícones carreguem instantaneamente.
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+        window.requestIdleCallback(() => {
+            initGlobalVectorMap(capitaisGlobaisComClima);
+        }, { timeout: 200 });
+    } else {
+        setTimeout(() => {
+            initGlobalVectorMap(capitaisGlobaisComClima);
+        }, 100);
+    }
 }
 
 function renderMobileDailyDetailsHtml(dayIdx, climaData, cidadeNome) {
@@ -738,26 +750,6 @@ function initGlobalVectorMap(capitaisGlobaisDados = CAPITAIS_GLOBAIS) {
         }
     });
 
-    if (!tempTileLayer && typeof L !== "undefined") {
-        tempTileLayer = L.tileLayer('https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=c8d45df9e0d1d6447d6d53ef69eb6861', {
-            opacity: 0.65,
-            zIndex: 100,
-            maxZoom: 8,
-            noWrap: true,
-            bounds: bounds
-        });
-    }
-
-    if (!rainTileLayer && typeof L !== "undefined") {
-        rainTileLayer = L.tileLayer('https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=c8d45df9e0d1d6447d6d53ef69eb6861', {
-            opacity: 0.65,
-            zIndex: 100,
-            maxZoom: 8,
-            noWrap: true,
-            bounds: bounds
-        });
-    }
-
     // 6 Capitais Globais
     capitaisGlobaisDados.forEach(m => {
         const isWashington = m.nome.includes("Washington");
@@ -776,5 +768,8 @@ export default {
     url: "#inicio",
     label: "Dashboard",
     icone: SVG_ICONS.dashboard,
-    pagina: inicio
+    mount: inicio,
+    unmount: cleanupGlobalMap,
+    pagina: inicio,
+    cleanup: cleanupGlobalMap
 };

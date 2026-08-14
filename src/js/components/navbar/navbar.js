@@ -13,7 +13,7 @@ function navbar(rotas) {
         <nav class="bem-navbar">
             <div class="bem-navbar__container">
                 <div class="bem-navbar__left">
-                    <button id="btn-toggle-menu" class="bem-navbar__toggle" title="Abrir Menu">
+                    <button id="btn-toggle-menu" class="bem-navbar__toggle" title="Abrir Menu" aria-label="Abrir Menu de Navegação">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <line x1="3" y1="12" x2="21" y2="12"/>
                             <line x1="3" y1="6" x2="21" y2="6"/>
@@ -36,11 +36,11 @@ function navbar(rotas) {
 
                 <div class="bem-navbar__right">
                     <!-- Botão de Busca Dedicado no Mobile (Spec v7.0 Requirement) -->
-                    <button id="btn-search-mobile" class="bem-navbar__theme-btn bem-navbar__search-mobile-btn btn-search-mobile mobile-search-btn" title="Pesquisar Cidade">
+                    <button id="btn-search-mobile" class="bem-navbar__theme-btn bem-navbar__search-mobile-btn btn-search-mobile mobile-search-btn" title="Pesquisar Cidade" aria-label="Abrir Pesquisa de Cidade">
                         ${SVG_ICONS.search}
                     </button>
 
-                    <button id="btn-toggle-theme" class="bem-navbar__theme-btn" title="Alternar Tema">
+                    <button id="btn-toggle-theme" class="bem-navbar__theme-btn" title="Alternar Tema" aria-label="Alternar Tema Claro ou Escuro">
                         ${savedTheme === 'dark' ? SVG_ICONS.sun : SVG_ICONS.moon}
                     </button>
                     
@@ -210,6 +210,13 @@ function initNavbarEvents() {
     document.addEventListener('click', (e) => {
         if (searchForm && !searchForm.contains(e.target)) {
             closeAutocomplete();
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeSearchMobile();
+            closeDrawer();
         }
     });
 

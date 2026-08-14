@@ -1009,12 +1009,14 @@
         color: var(--text-muted);
     }
 
-    /* Container de Detalhes Expansível Mobile */
+    /* Container de Detalhes Expansível Mobile (Aceleração por Hardware 60fps) */
     .mobile-daily-details-panel {
         max-height: 0;
         opacity: 0;
         overflow: hidden;
-        transform: translateY(8px);
+        transform: translate3d(0, 8px, 0);
+        will-change: max-height, opacity, transform;
+        backface-visibility: hidden;
         transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, transform 0.3s ease, margin-top 0.3s ease;
         margin-top: 0;
     }
@@ -1022,7 +1024,7 @@
     .mobile-daily-details-panel--open {
         max-height: 380px;
         opacity: 1;
-        transform: translateY(0);
+        transform: translate3d(0, 0, 0);
         margin-top: 0.75rem;
     }
 
@@ -1111,7 +1113,6 @@
 }
 
 @media (max-width: 480px) {
-    .mobile-hero-icon svg,
     .hero-card__icon-big svg {
         min-width: 40px;
         min-height: 40px;

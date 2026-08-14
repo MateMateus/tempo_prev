@@ -1,8 +1,8 @@
 import buscarServicos from "../services/apiCache.js";
 import { SVG_ICONS } from "../icons.js";
 import { obterIconeClimaSvg } from "../../utils/weatherUtils.js";
-import { initAccordionEvents } from "../../utils/accordion.js";
 import { renderGridSkeleton, gerarSlugCidade } from "../../utils/uiHelpers.js";
+import { escapeHtml } from "../../utils/sanitizer.js";
 
 const REGIOES_SP = [
     { id: "capital", nome: "Capital / Grande SP", cidade: "São Paulo", lat: -23.5505, lon: -46.6333 },
@@ -15,9 +15,11 @@ const REGIOES_SP = [
     { id: "bauru", nome: "Região de Bauru", cidade: "Bauru", lat: -22.3145, lon: -49.0587 }
 ];
 
-async function spRegioes(app) {
-    // Renderiza a estrutura inicial com Skeleton Loader imediatamente
-    app.innerHTML = `
+async function mount(container) {
+    if (!container) return;
+
+    // Renderiza a estrutura HTML original com Skeleton Loader
+    container.innerHTML = `
         <div class="regioes-container">
             <div class="regioes-header">
                 <h1 class="regioes-title">${SVG_ICONS.map} Clima nas Regiões de São Paulo</h1>
@@ -30,101 +32,126 @@ async function spRegioes(app) {
         </div>
     `;
 
-    const regioesComClima = await Promise.all(REGIOES_SP.map(async (r) => {
-        try {
-            const climaData = await buscarServicos(
-                "https://api.open-meteo.com/v1/forecast",
-                {
-                    latitude: r.lat,
-                    longitude: r.lon,
-                    current_weather: true,
-                    hourly: "relative_humidity_2m",
-                    timezone: "America/Sao_Paulo"
-                },
-                `regiao-sp-${r.id}`
-            );
+    const gridContainer = document.getElementById("grid-regioes-sp");
+    if (!gridContainer) return;
 
-            const atual = climaData?.current_weather || { temperature: 20, windspeed: 10, weathercode: 0 };
-            const temp = Math.round(atual.temperature);
-            const vento = Math.round(atual.windspeed);
-            const iconeSvg = obterIconeClimaSvg(atual.weathercode);
-            const umidade = climaData?.hourly?.relative_humidity_2m?.[0] ?? 55;
+    try {
+        // Batch Fetching: 1 única requisição HTTP para todas as coordenadas
+        const lats = REGIOES_SP.map(r => r.lat).join(',');
+        const lons = REGIOES_SP.map(r => r.lon).join(',');
+
+        const batchData = await buscarServicos(
+            "https://api.open-meteo.com/v1/forecast",
+            {
+                latitude: lats,
+                longitude: lons,
+                current_weather: true,
+                hourly: "relative_humidity_2m",
+                timezone: "America/Sao_Paulo"
+            },
+            "sp-regioes-batch-v4"
+        );
+
+        const dadosArray = Array.isArray(batchData) ? batchData : [batchData];
+
+        const regioesComClima = REGIOES_SP.map((reg, i) => {
+            const data = dadosArray[i] || {};
+            const atual = data?.current_weather || { temperature: 20, windspeed: 10, weathercode: 0 };
+            const temp = Math.round(atual.temperature ?? 20);
+            const vento = Math.round(atual.windspeed ?? 10);
+            const umidade = Math.round(data?.hourly?.relative_humidity_2m?.[12] ?? 60);
+            const iconeSvg = obterIconeClimaSvg(atual.weathercode ?? 0);
 
             return {
-                ...r,
+                ...reg,
                 temp: `${temp}°C`,
                 sensacao: `${temp - 1}°C`,
                 vento: `${vento} km/h`,
                 umidade: `${umidade}%`,
-                iconeSvg
+                iconeSvg: iconeSvg || SVG_ICONS.weatherSun
             };
-        } catch (e) {
-            console.error(`Erro ao carregar clima para ${r.nome}:`, e);
-            return {
-                ...r,
-                temp: "--°C",
-                sensacao: "Erro API",
-                vento: "-- km/h",
-                umidade: "--%",
-                iconeSvg: SVG_ICONS.weatherCloudSun
-            };
-        }
-    }));
+        });
 
-    const gridContainer = document.getElementById("grid-regioes-sp");
-    if (gridContainer) {
+        // Renderiza a estrutura HTML original fiel do card de regiões de SP
         gridContainer.innerHTML = regioesComClima.map(r => `
-            <div class="regiao-card" id="card-regiao-${r.id}">
+            <div class="regiao-card">
                 <div class="regiao-card__top">
                     <div>
-                        <h3 class="regiao-card__name">${r.nome}</h3>
-                        <span class="regiao-card__state">${r.cidade} • SP</span>
+                        <h3 class="regiao-card__name">${escapeHtml(r.nome)}</h3>
+                        <span class="regiao-card__state">São Paulo • BR</span>
                     </div>
-                    <span class="regiao-card__icon" id="icon-${r.id}">${r.iconeSvg}</span>
+                    <span class="regiao-card__icon">${r.iconeSvg}</span>
                 </div>
 
                 <div class="regiao-card__bottom">
-                    <div class="regiao-card__temp" id="temp-${r.id}">${r.temp}</div>
-                    <button class="regiao-card__btn-toggle" data-id="${r.id}" id="btn-toggle-${r.id}">
+                    <div class="regiao-card__temp">${escapeHtml(r.temp)}</div>
+                    <button class="regiao-card__btn-toggle" data-id="${r.id}" id="btn-toggle-reg-${r.id}" aria-label="Ver mais detalhes de ${escapeHtml(r.nome)}">
                         <span>Ver detalhes</span>
-                        ${SVG_ICONS.chevronDown}
+                        ${SVG_ICONS.chevronDown || '<span>˅</span>'}
                     </button>
                 </div>
 
-                <!-- Accordion Expansível de Detalhes Climáticos -->
                 <div class="regiao-card__accordion" id="accordion-${r.id}">
                     <div class="accordion-grid">
                         <div class="accordion-item">
                             <span class="accordion-item__label">Sensação</span>
-                            <span class="accordion-item__val" id="sensacao-${r.id}">${r.sensacao}</span>
+                            <span class="accordion-item__val">${escapeHtml(r.sensacao)}</span>
                         </div>
                         <div class="accordion-item">
                             <span class="accordion-item__label">Vento</span>
-                            <span class="accordion-item__val" id="vento-${r.id}">${r.vento}</span>
+                            <span class="accordion-item__val">${escapeHtml(r.vento)}</span>
                         </div>
                         <div class="accordion-item">
                             <span class="accordion-item__label">Umidade</span>
-                            <span class="accordion-item__val" id="umidade-${r.id}">${r.umidade}</span>
+                            <span class="accordion-item__val">${escapeHtml(r.umidade)}</span>
                         </div>
                         <div class="accordion-item">
                             <span class="accordion-item__label">Pressão</span>
-                            <span class="accordion-item__val" id="pressao-${r.id}">1013 hPa</span>
+                            <span class="accordion-item__val">1013 hPa</span>
                         </div>
                     </div>
                     <div style="margin-top: 0.75rem; text-align: right;">
-                        <a href="#clima/${gerarSlugCidade(r.cidade)}" style="font-size: 0.775rem; color: var(--text-primary); text-decoration: underline; font-weight: 600;">Abrir no Dashboard →</a>
+                        <a href="#clima/${gerarSlugCidade(r.cidade)}" class="accordion-link">Abrir no Dashboard →</a>
                     </div>
                 </div>
             </div>
         `).join('');
 
-        initAccordionEvents('.regiao-card__btn-toggle', 'accordion-', 'regiao-card__accordion--open');
+        initAccordionEvents();
+
+    } catch (err) {
+        console.error("Erro ao carregar regiões de SP:", err);
     }
 }
+
+function initAccordionEvents() {
+    document.querySelectorAll('.regiao-card__btn-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = btn.getAttribute('data-id');
+            const accordion = document.getElementById(`accordion-${id}`);
+            if (accordion) {
+                const isOpen = accordion.classList.contains('regiao-card__accordion--open');
+                
+                if (isOpen) {
+                    accordion.classList.remove('regiao-card__accordion--open');
+                    btn.innerHTML = `<span>Ver detalhes</span> ${SVG_ICONS.chevronDown || '<span>˅</span>'}`;
+                } else {
+                    accordion.classList.add('regiao-card__accordion--open');
+                    btn.innerHTML = `<span>Recolher</span> ${SVG_ICONS.chevronUp || '<span>˄</span>'}`;
+                }
+            }
+        });
+    });
+}
+
+function unmount() {}
 
 export default {
     url: "#sp-regioes",
     label: "Regiões de SP",
     icone: SVG_ICONS.map,
-    pagina: spRegioes
+    mount,
+    unmount,
+    pagina: mount,
+    cleanup: unmount
 };
