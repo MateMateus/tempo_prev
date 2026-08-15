@@ -2,6 +2,7 @@ import buscarServicos from "../services/apiCache.js";
 import { SVG_ICONS } from "../icons.js";
 import { gerarSlugCidade } from "../../utils/uiHelpers.js";
 import { cleanupGlobalMap } from "../inicio/mapaGlobal.js";
+import { traduzirClimaWmo, obterDiaSemana } from "../../utils/weatherUtils.js";
 
 const CAPITAIS_BRASILEIRAS = [
     { nome: "São Paulo", estado: "SP", lat: -23.5505, lon: -46.6333 },
@@ -19,20 +20,7 @@ const CAPITAIS_GLOBAIS = [
     { nome: "Moscou", pais: "RU", lat: 55.7558, lon: 37.6173, temp: "18°", iconeSvg: SVG_ICONS.weatherSun }
 ];
 
-function traduzirClimaWmo(codigo) {
-    if (codigo === 0) return { texto: "Ensolarado e Limpo", iconeSvg: SVG_ICONS.weatherSun, frase: "Dia ensolarado com céu limpo." };
-    if ([1, 2, 3].includes(codigo)) return { texto: "Parcialmente Nublado", iconeSvg: SVG_ICONS.weatherCloudSun, frase: "Sol com algumas nuvens." };
-    if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(codigo)) return { texto: "Chuva Moderada", iconeSvg: SVG_ICONS.weatherRain, frase: "Expectativa de chuva durante o dia." };
-    return { texto: "Nublado", iconeSvg: SVG_ICONS.weatherCloudSun, frase: "Céu encoberto por nuvens." };
-}
 
-function obterDiaSemana(dataIso, indice) {
-    if (indice === 0) return "Hoje";
-    if (indice === 1) return "Amanhã";
-    const dias = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-    const d = new Date(dataIso + "T00:00:00");
-    return dias[d.getDay()];
-}
 
 const ESTADOS_MAP = {
     "São Paulo": "SP", "Rio de Janeiro": "RJ", "Paraná": "PR", "Distrito Federal": "DF",
@@ -46,8 +34,6 @@ const ESTADOS_MAP = {
 
 let mapInstance = null;
 let tileLayerInstance = null;
-let tempTileLayer = typeof L !== "undefined" ? L.tileLayer('https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=c8d45df9e0d1d6447d6d53ef69eb6861', { opacity: 0.65, zIndex: 100 }) : null;
-let rainTileLayer = typeof L !== "undefined" ? L.tileLayer('https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=c8d45df9e0d1d6447d6d53ef69eb6861', { opacity: 0.65, zIndex: 100 }) : null;
 
 
 async function inicio(app, queryParams = {}) {
@@ -728,7 +714,7 @@ function initGlobalVectorMap(capitaisGlobaisDados = CAPITAIS_GLOBAIS) {
             : 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}/{y}{r}.png';
     };
 
-    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
     tileLayerInstance = L.tileLayer(getTileUrl(currentTheme), {
         attribution: '&copy; CartoDB & OpenStreetMap',
         maxZoom: 8,

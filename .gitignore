@@ -8,3 +8,5 @@ node_modules/
 # Especificações e arquivos temporários de spec
 *spec.json
 
+# Arquivo de configuração local (chaves de API)
+src/js/config.js

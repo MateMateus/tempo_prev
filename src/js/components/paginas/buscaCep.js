@@ -282,7 +282,7 @@ async function initCepMiniMap(lat, lon, bairro, cidade) {
             : 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}/{y}{r}.png';
     };
 
-    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
     
     cepTileLayerInstance = L.tileLayer(getTileUrl(currentTheme), {
         attribution: '&copy; CartoDB & OpenStreetMap',

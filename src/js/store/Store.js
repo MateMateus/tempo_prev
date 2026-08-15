@@ -1,10 +1,8 @@
-/**
- * Gerenciador de Estado Centralizado & Barramento de Eventos Reativo (Store.js).
- * Padrão Publisher/Subscriber em JS Nativo sem dependências externas.
- */
+// Estado simples da aplicação e sistema PubSub
+
 
 const state = {
-    theme: localStorage.getItem('tempo_prev_theme') || 'dark',
+    theme: localStorage.getItem('tempo_prev_theme') || 'light',
     currentCity: 'São Paulo, BR',
     currentWeather: null
 };

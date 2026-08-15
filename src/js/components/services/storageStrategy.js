@@ -1,4 +1,5 @@
-const TTL_15_MINUTOS_MS = 15 * 60 * 1000; // 15 minutos em milissegundos
+const TTL_12_HORAS_MS = 12 * 60 * 60 * 1000; // 12 horas (720 minutos) em milissegundos
+const TTL_CACHE_MS = TTL_12_HORAS_MS;
 
 const memoriaTemporaria = {
     _cache: new Map(),
@@ -10,8 +11,8 @@ const memoriaTemporaria = {
         const agora = Date.now();
         const hojeStr = new Date().toISOString().split('T')[0];
 
-        // Valida TTL de 15 minutos e virada de dia
-        const estaExpirado = (agora - envelope.timestamp) > TTL_15_MINUTOS_MS;
+        // Valida TTL de 12 horas e virada de dia
+        const estaExpirado = (agora - envelope.timestamp) > TTL_CACHE_MS;
         const mudouODia = envelope.dateStr !== hojeStr;
 
         if (estaExpirado || mudouODia) {
@@ -26,7 +27,7 @@ const memoriaTemporaria = {
         if (!this._cache.has(chave)) return 0;
         const envelope = this._cache.get(chave);
         const passado = Date.now() - envelope.timestamp;
-        const restanteMs = Math.max(0, TTL_15_MINUTOS_MS - passado);
+        const restanteMs = Math.max(0, TTL_CACHE_MS - passado);
         return Math.ceil(restanteMs / 60000);
     },
 
@@ -71,7 +72,7 @@ const memoriaPermanente = {
             const agora = Date.now();
             const hojeStr = new Date().toISOString().split('T')[0];
 
-            const estaExpirado = (agora - envelope.timestamp) > TTL_15_MINUTOS_MS;
+            const estaExpirado = (agora - envelope.timestamp) > TTL_CACHE_MS;
             const mudouODia = envelope.dateStr !== hojeStr;
 
             if (estaExpirado || mudouODia) {
@@ -94,7 +95,7 @@ const memoriaPermanente = {
             if (!itemStr) return memoriaTemporaria.obterMinutosRestantes(chave);
             const envelope = JSON.parse(itemStr);
             const passado = Date.now() - envelope.timestamp;
-            const restanteMs = Math.max(0, TTL_15_MINUTOS_MS - passado);
+            const restanteMs = Math.max(0, TTL_CACHE_MS - passado);
             return Math.ceil(restanteMs / 60000);
         } catch (e) {
             return memoriaTemporaria.obterMinutosRestantes(chave);
@@ -127,20 +128,9 @@ const memoriaPermanente = {
         try {
             localStorage.setItem(chave, JSON.stringify(envelope));
         } catch (e) {
-            console.warn('[STORAGE] QuotaExceededError no localStorage. Purgando chaves antigas...');
-            try {
-                for (let i = localStorage.length - 1; i >= 0; i--) {
-                    const k = localStorage.key(i);
-                    if (k && (k.startsWith('clima-') || k.startsWith('geocoding-') || k.startsWith('viacep-'))) {
-                        this.existe(k);
-                    }
-                }
-                localStorage.setItem(chave, JSON.stringify(envelope));
-            } catch (errRetry) {
-                console.warn('[STORAGE] Persistência mantida com sucesso em RAM:', chave);
-            }
+            console.warn('Erro ao salvar no localStorage, usando cache em memória.');
         }
     }
 };
 
-export { memoriaTemporaria, memoriaPermanente, TTL_15_MINUTOS_MS };
+export { memoriaTemporaria, memoriaPermanente, TTL_CACHE_MS, TTL_12_HORAS_MS, TTL_CACHE_MS as TTL_15_MINUTOS_MS };

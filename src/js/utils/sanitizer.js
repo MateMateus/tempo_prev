@@ -1,7 +1,5 @@
-/**
- * Utilitário de Sanitização contra ataques Cross-Site Scripting (XSS).
- * Escapa caracteres especiais de HTML para garantir injeção segura de dados externos no DOM.
- */
+// Sanitização simples de HTML para prevenir injeções de script
+
 
 export function escapeHtml(str) {
     if (str === null || str === undefined) return '';

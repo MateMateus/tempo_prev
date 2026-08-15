@@ -1,7 +1,5 @@
-/**
- * Roteador SPA com Hooks de Ciclo de Vida Nativos (mount e unmount).
- * Garante desvinculação completa de memória, mapas Leaflet e ouvintes DOM antes de cada transição.
- */
+// Roteador SPA por hash
+
 
 import Logger from '../utils/logger.js';
 

@@ -1,11 +1,7 @@
 import { SVG_ICONS } from "../components/icons.js";
 
-/**
- * Inicializa os manipuladores de eventos para botões de acordeão expansíveis com suporte a A11y (ARIA).
- * @param {string} buttonSelector - Seletor CSS dos botões de alternância (ex: '.regiao-card__btn-toggle').
- * @param {string} accordionIdPrefix - Prefixo do ID do elemento de acordeão (ex: 'accordion-' ou 'accordion-cap-').
- * @param {string} openClass - Classe CSS aplicada quando aberto (ex: 'regiao-card__accordion--open').
- */
+// Handler para acordeões expansíveis
+
 export function initAccordionEvents(buttonSelector, accordionIdPrefix, openClass) {
     document.querySelectorAll(buttonSelector).forEach(btn => {
         const itemId = btn.getAttribute('data-id');

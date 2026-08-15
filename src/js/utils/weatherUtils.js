@@ -1,10 +1,7 @@
 import { SVG_ICONS } from "../components/icons.js";
 
-/**
- * Traduz o código meteorológico WMO da Open-Meteo para texto descritivo, ícone SVG e frase sumária.
- * @param {number} codigo - Código WMO retornado pela API.
- * @returns {{ texto: string, iconeSvg: string, frase: string }}
- */
+// Traduz código de clima da Open-Meteo
+
 export function traduzirClimaWmo(codigo) {
     if (codigo === 0) {
         return {

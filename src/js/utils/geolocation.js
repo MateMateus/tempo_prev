@@ -1,9 +1,7 @@
 import buscarServicos from "../components/services/apiCache.js";
 
-/**
- * Tenta obter a localização GPS atual do usuário via Geolocation API nativa.
- * @returns {Promise<{ lat: number, lon: number, cidade: string }>}
- */
+// Obtém coordenadas GPS do navegador
+
 export async function obterLocalizacaoGPS() {
     if (!("geolocation" in navigator)) {
         throw new Error("Geolocalização não é suportada por este navegador.");

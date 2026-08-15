@@ -6,7 +6,7 @@ function navbar(rotas) {
     const header = document.getElementById('navbar');
     if (!header) return;
 
-    const savedTheme = localStorage.getItem('tempo_prev_theme') || 'dark';
+    const savedTheme = localStorage.getItem('tempo_prev_theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
 
     header.innerHTML = `
@@ -14,11 +14,7 @@ function navbar(rotas) {
             <div class="bem-navbar__container">
                 <div class="bem-navbar__left">
                     <button id="btn-toggle-menu" class="bem-navbar__toggle" title="Abrir Menu" aria-label="Abrir Menu de Navegação">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="3" y1="12" x2="21" y2="12"/>
-                            <line x1="3" y1="6" x2="21" y2="6"/>
-                            <line x1="3" y1="18" x2="21" y2="18"/>
-                        </svg>
+                        ${SVG_ICONS.menu}
                     </button>
                     <a href="#inicio" class="bem-navbar__brand">
                         <span class="bem-navbar__brand-icon">${SVG_ICONS.brandLogo}</span>
@@ -120,7 +116,7 @@ function initNavbarEvents() {
 
     if (themeBtn) {
         themeBtn.addEventListener('click', () => {
-            const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', newTheme);
             localStorage.setItem('tempo_prev_theme', newTheme);

@@ -52,7 +52,7 @@ export function initGlobalVectorMap() {
             : 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png';
     };
 
-    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
     
     tileLayerInstance = L.tileLayer(getTileUrl(currentTheme), {
         attribution: '&copy; CartoDB & OpenStreetMap',

@@ -8,7 +8,7 @@ async function buscarServicos(url, params = {}, idRotulo = 'dados') {
     const searchParams = new URLSearchParams(params);
     const chaveCache = `${url}?${searchParams.toString()}`;
 
-    // 1. Verifica se existe cache válido dentro do TTL de 15 minutos
+    // 1. Verifica se existe cache válido dentro do TTL de 12 horas
     if (storage.existe(chaveCache)) {
         const minsRestantes = storage.obterMinutosRestantes(chaveCache);
         Logger.cacheHit(idRotulo, minsRestantes);
